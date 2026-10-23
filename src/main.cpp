@@ -1,6 +1,6 @@
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 int main() {
-    std::cout << "Hello, GDRE!" << std::endl;
+    spdlog::info("Hello, GDRE!");
     return 0;
 }
