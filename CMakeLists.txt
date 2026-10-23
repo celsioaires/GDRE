@@ -3,8 +3,8 @@ project(GDRE)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_subdirectory(vendor/spdlog)
-add_subdirectory(vendor/glfw)
+add_subdirectory(libs/spdlog)
+add_subdirectory(libs/glfw)
 
 add_executable(GDRE
         src/main.cpp)
