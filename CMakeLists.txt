@@ -10,7 +10,9 @@ add_subdirectory(libs/fastgltf)
 
 add_executable(GDRE
     src/main.cpp
+    src/engine.cpp
     src/core/platform.cpp
+    src/core/time.cpp
     src/gui/window.cpp
     src/load/loader.cpp
     src/render/renderer.cpp

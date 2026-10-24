@@ -65,6 +65,8 @@ int main() {
         spdlog::info("Size: {}x{}", width, height);
     }
 
+    ImGui::DestroyContext();
+
     glfwDestroyWindow(window);
     glfwTerminate();
 
