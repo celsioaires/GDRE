@@ -1,74 +1,35 @@
 #include <spdlog/spdlog.h>
 
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+#include "engine.h"
 
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtx/string_cast.hpp>
+namespace src {
+    static Engine sEngine;
 
-#include <fastgltf/core.hpp>
+    bool execute() {
+        spdlog::info("Initializing GDRE...");
 
-#include <imgui.h>
+        Engine& e = sEngine;
 
-int main() {
-    spdlog::info("Hello, GDRE!");
-
-    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
-
-    if (!glfwInit()) {
-        spdlog::error("Failed to initialize GLFW!");
-        return 1;
-    }
-
-    // Hints
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // Vulkan
-    glfwWindowHint(GLFW_MAXIMIZED, true); // Maximized
-    glfwWindowHint(GLFW_VISIBLE, false); // Hidden
-
-    int width{1}, height{1};
-
-    GLFWwindow* window = glfwCreateWindow(width, height, "GDRE", nullptr, nullptr);
-
-    if (!window) {
-        spdlog::error("Failed to create window!");
-        return 1;
-    }
-
-    IMGUI_CHECKVERSION();
-
-    ImGui::CreateContext();
-    ImGui::StyleColorsClassic();
-
-    fastgltf::Expected<fastgltf::GltfDataBuffer> data = fastgltf::GltfDataBuffer::FromPath("assets/gltf/meshes.glb");
-
-    if (data.error() != fastgltf::Error::None) {
-        spdlog::error("Failed to read glTF asset: {}!", fastgltf::getErrorMessage(data.error()));
-        return 1;
-    }
-
-    glm::mat4 matrix(1);
-
-    glfwShowWindow(window);
-
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
-
-        if (glfwGetWindowAttrib(window, GLFW_ICONIFIED)) {
-            continue;
+        if (!e.initialize()) {
+            return false;
         }
 
-        spdlog::info("Matrix: {}", glm::to_string(matrix));
+        spdlog::info("Running GDRE...");
 
-        glfwGetWindowSize(window, &width, &height);
+        e.run();
 
-        spdlog::info("Size: {}x{}", width, height);
+        spdlog::info("Shutting down GDRE...");
+
+        e.cleanup();
+
+        return true;
     }
+}
 
-    ImGui::DestroyContext();
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
+int main() {
+    if (!src::execute()) {
+        return 1;
+    }
 
     return 0;
 }

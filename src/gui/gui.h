@@ -2,5 +2,8 @@
 
 namespace gui {
     class Gui {
+    public:
+        void initialize();
+        void cleanup();
     };
 }

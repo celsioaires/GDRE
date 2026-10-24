@@ -2,5 +2,7 @@
 
 namespace load {
     class Loader {
+    public:
+        bool load();
     };
 }
