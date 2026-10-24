@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 add_subdirectory(libs/spdlog)
 add_subdirectory(libs/glfw)
 add_subdirectory(libs/glm)
+add_subdirectory(libs/fastgltf)
 
 add_executable(GDRE
         src/main.cpp)
@@ -13,4 +14,5 @@ add_executable(GDRE
 target_link_libraries(GDRE PRIVATE
         spdlog::spdlog
         glfw
-        glm::glm)
+        glm::glm
+        fastgltf::fastgltf)

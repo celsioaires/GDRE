@@ -7,6 +7,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include <fastgltf/core.hpp>
+
 int main() {
     spdlog::info("Hello, GDRE!");
 
@@ -29,6 +31,13 @@ int main() {
 
     if (!window) {
         spdlog::error("Failed to create GLFW window!");
+        return 1;
+    }
+
+    fastgltf::Expected<fastgltf::GltfDataBuffer> data = fastgltf::GltfDataBuffer::FromPath("assets/gltf/meshes.glb");
+
+    if (data.error() != fastgltf::Error::None) {
+        spdlog::error("Failed to read gltf: {}!", fastgltf::getErrorMessage(data.error()));
         return 1;
     }
 
