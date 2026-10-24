@@ -9,7 +9,12 @@ add_subdirectory(libs/glm)
 add_subdirectory(libs/fastgltf)
 
 add_executable(GDRE
-    src/main.cpp)
+    src/main.cpp
+    src/core/platform.cpp
+    src/gui/window.cpp
+    src/load/loader.cpp
+    src/render/renderer.cpp
+    src/gui/gui.cpp)
 
 target_sources(GDRE PRIVATE
     libs/imgui/imgui.cpp
