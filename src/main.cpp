@@ -9,10 +9,12 @@
 
 #include <fastgltf/core.hpp>
 
+#include <imgui.h>
+
 int main() {
     spdlog::info("Hello, GDRE!");
 
-    // glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
 
     if (!glfwInit()) {
         spdlog::error("Failed to initialize GLFW!");
@@ -24,20 +26,24 @@ int main() {
     glfwWindowHint(GLFW_MAXIMIZED, true); // Maximized
     glfwWindowHint(GLFW_VISIBLE, false); // Hidden
 
-    int width{1};
-    int height{1};
+    int width{1}, height{1};
 
     GLFWwindow* window = glfwCreateWindow(width, height, "GDRE", nullptr, nullptr);
 
     if (!window) {
-        spdlog::error("Failed to create GLFW window!");
+        spdlog::error("Failed to create window!");
         return 1;
     }
+
+    IMGUI_CHECKVERSION();
+
+    ImGui::CreateContext();
+    ImGui::StyleColorsClassic();
 
     fastgltf::Expected<fastgltf::GltfDataBuffer> data = fastgltf::GltfDataBuffer::FromPath("assets/gltf/meshes.glb");
 
     if (data.error() != fastgltf::Error::None) {
-        spdlog::error("Failed to read gltf: {}!", fastgltf::getErrorMessage(data.error()));
+        spdlog::error("Failed to read glTF asset: {}!", fastgltf::getErrorMessage(data.error()));
         return 1;
     }
 
@@ -52,11 +58,11 @@ int main() {
             continue;
         }
 
-        // spdlog::info("Matrix: {}", glm::to_string(matrix));
+        spdlog::info("Matrix: {}", glm::to_string(matrix));
 
-        // glfwGetWindowSize(window, &width, &height);
+        glfwGetWindowSize(window, &width, &height);
 
-        // spdlog::info("Size: {}x{}", width, height);
+        spdlog::info("Size: {}x{}", width, height);
     }
 
     glfwDestroyWindow(window);
