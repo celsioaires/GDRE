@@ -5,6 +5,7 @@
     <mapping directory="$PROJECT_DIR$/libs/fastgltf" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/libs/glfw" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/libs/glm" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libs/imgui" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/libs/spdlog" vcs="Git" />
   </component>
 </project>

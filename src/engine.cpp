@@ -11,10 +11,19 @@ namespace src {
 
         mGui.initialize();
 
+        if (
+            !mLoader.load() ||
+            !mRenderer.initialize()
+        ) {
+            return false;
+        }
+
         return true;
     }
 
     void Engine::cleanup() {
+        mRenderer.cleanup();
+        mLoader.unload();
         mGui.cleanup();
         mWindow.cleanup();
         mPlatform.cleanup();

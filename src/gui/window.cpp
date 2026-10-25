@@ -7,10 +7,9 @@
 
 namespace gui {
     bool Window::initialize() {
-        // Hints
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // Vulkan
-        glfwWindowHint(GLFW_MAXIMIZED, true); // Maximized
-        glfwWindowHint(GLFW_VISIBLE, false); // Hidden
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_MAXIMIZED, true);
+        glfwWindowHint(GLFW_VISIBLE, false);
 
         mHandle = glfwCreateWindow(1, 1, "GDRE", nullptr, nullptr);
 

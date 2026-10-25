@@ -7,7 +7,6 @@
 
 namespace core {
     bool Platform::initialize() {
-        // Hints
         glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
 
         if (!glfwInit()) {
