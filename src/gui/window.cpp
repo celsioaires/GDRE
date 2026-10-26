@@ -11,7 +11,7 @@ namespace gui {
         glfwWindowHint(GLFW_MAXIMIZED, true);
         glfwWindowHint(GLFW_VISIBLE, false);
 
-        mHandle = glfwCreateWindow(1, 1, "GDRE", nullptr, nullptr);
+        mHandle = glfwCreateWindow(800, 600, "GDRE", nullptr, nullptr);
 
         if (!mHandle) {
             spdlog::error("Failed to create window!");
