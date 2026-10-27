@@ -15,8 +15,4 @@ namespace load {
 
         return true;
     }
-
-    void Loader::unload() {
-
-    }
 }

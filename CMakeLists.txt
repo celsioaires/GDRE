@@ -56,6 +56,8 @@ add_executable(GDRE
     src/render/vku/vku.cpp
     src/render/renderer.cpp)
 
+target_compile_definitions(GDRE PRIVATE VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1)
+
 if (ENABLE_CPP20_MODULE)
     target_compile_definitions(GDRE PRIVATE USE_CPP20_MODULES)
 endif()

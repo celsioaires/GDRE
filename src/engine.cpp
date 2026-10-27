@@ -22,8 +22,6 @@ namespace src {
     }
 
     void Engine::cleanup() {
-        mRenderer.cleanup();
-        mLoader.unload();
         mGui.cleanup();
         mWindow.cleanup();
         mPlatform.cleanup();

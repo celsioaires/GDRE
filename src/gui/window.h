@@ -4,7 +4,7 @@ struct GLFWwindow;
 
 namespace gui {
     class Window {
-        GLFWwindow* mHandle{ nullptr };
+        GLFWwindow* mHandle = nullptr;
     public:
         bool initialize();
         void cleanup();

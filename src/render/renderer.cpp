@@ -8,8 +8,4 @@ namespace render {
 
         return true;
     }
-
-    void Renderer::cleanup() {
-        mVKU.cleanup();
-    }
 }
