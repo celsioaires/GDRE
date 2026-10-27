@@ -18,5 +18,9 @@ namespace vku {
         vk::raii::Queue mGraphicsQueue = nullptr;
     public:
         bool initialize(GLFWwindow* window);
+
+        const vk::raii::SurfaceKHR& getSurface() const { return mSurface; }
+        const vk::raii::PhysicalDevice& getPhysicalDevice() const { return mPhysicalDevice; }
+        const vk::raii::Device& getDevice() const { return mDevice; }
     };
 }

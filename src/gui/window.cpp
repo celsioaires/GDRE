@@ -7,12 +7,15 @@
 
 namespace gui {
     bool Window::initialize() {
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_MAXIMIZED, true);
-        glfwWindowHint(GLFW_VISIBLE, false);
+        // Hints
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // Vulkan
+        glfwWindowHint(GLFW_MAXIMIZED, true); // Maximized
+        glfwWindowHint(GLFW_VISIBLE, false); // Hidden
 
+        // Create GLFW window
         mHandle = glfwCreateWindow(800, 600, "GDRE", nullptr, nullptr);
 
+        // ¿Failed?
         if (!mHandle) {
             spdlog::error("Failed to create window!");
             return false;

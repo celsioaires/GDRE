@@ -7,8 +7,10 @@
 
 namespace core {
     bool Platform::initialize() {
-        glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+        // Hints
+        glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11); // X11
 
+        // GLFW initialization
         if (!glfwInit()) {
             spdlog::error("Failed to initialize GLFW!");
             return false;
