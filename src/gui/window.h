@@ -13,5 +13,7 @@ namespace gui {
 
         bool isOpen();
         bool isMinimized();
+
+        GLFWwindow* getHandle() const { return mHandle; }
     };
 }

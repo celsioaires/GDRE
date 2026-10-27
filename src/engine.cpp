@@ -13,7 +13,7 @@ namespace src {
 
         if (
             !mLoader.load() ||
-            !mRenderer.initialize()
+            !mRenderer.initialize(mWindow)
         ) {
             return false;
         }

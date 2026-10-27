@@ -1,8 +1,8 @@
 #include "renderer.h"
 
 namespace render {
-    bool Renderer::initialize() {
-        if (!mVKU.initialize()) {
+    bool Renderer::initialize(const gui::Window& window) {
+        if (!mVKU.initialize(window.getHandle())) {
             return false;
         }
 

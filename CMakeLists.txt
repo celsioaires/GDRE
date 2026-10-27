@@ -45,14 +45,21 @@ add_subdirectory(libs/fastgltf)
 
 # GDRE
 add_executable(GDRE
+    # src
     src/application.cpp
     src/engine.cpp
     src/main.cpp
+    # core
     src/core/platform.cpp
     src/core/time.cpp
+    # gui
     src/gui/gui.cpp
     src/gui/window.cpp
+    # load
     src/load/loader.cpp
+    # render
+    src/render/vku/context.cpp
+    src/render/vku/swapchain.cpp
     src/render/vku/vku.cpp
     src/render/renderer.cpp)
 
