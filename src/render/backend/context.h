@@ -18,15 +18,16 @@ namespace backend {
 #endif
         vk::raii::SurfaceKHR mSurface = nullptr;
         vk::raii::PhysicalDevice mPhysicalDevice = nullptr;
+        uint32_t mGraphicsFamily = 0;
         vk::raii::Device mDevice = nullptr;
         vk::raii::Queue mGraphicsQueue = nullptr;
     public:
         bool initialize(GLFWwindow* window);
 
+        // Getters
         const vk::raii::SurfaceKHR& getSurface() const { return mSurface; }
         const vk::raii::PhysicalDevice& getPhysicalDevice() const { return mPhysicalDevice; }
+        uint32_t getGraphicsFamily() const { return mGraphicsFamily; }
         const vk::raii::Device& getDevice() const { return mDevice; }
-    private:
-
     };
 }

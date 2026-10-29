@@ -18,7 +18,6 @@ namespace backend {
             .surface = *surface,
             .minImageCount = 3,
             .imageFormat = vk::Format::eB8G8R8A8Srgb,
-            .imageColorSpace  = vk::ColorSpaceKHR::eSrgbNonlinear,
             .imageExtent = mExtent,
             .imageArrayLayers = 1,
             .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,

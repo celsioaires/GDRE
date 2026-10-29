@@ -3,9 +3,10 @@
 #include "context.h"
 #include "swapchain.h"
 #include "pipeline.h"
+#include "command.h"
 
 namespace backend {
-    struct WSI {
+    struct BackendInfo {
         GLFWwindow* window = nullptr;
         uint32_t width = 0;
         uint32_t height = 0;
@@ -15,7 +16,8 @@ namespace backend {
         Context mContext;
         Swapchain mSwapchain;
         Pipeline mGraphicsPipeline;
+        Command mCommand;
     public:
-        bool initialize(const WSI& wsi);
+        bool initialize(BackendInfo info);
     };
 }

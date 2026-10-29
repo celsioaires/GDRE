@@ -2,7 +2,7 @@
 
 namespace render {
     bool Renderer::initialize(const gui::Window& window) {
-        backend::WSI wsi{
+        backend::BackendInfo wsi{
             .window = window.getHandle(),
             .width = static_cast<uint32_t>(window.getWidth()),
             .height = static_cast<uint32_t>(window.getHeight()),

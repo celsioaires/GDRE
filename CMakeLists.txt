@@ -60,10 +60,11 @@ add_executable(GDRE
     # load
     src/load/loader.cpp
     # render
+    src/render/backend/backend.cpp
+    src/render/backend/command.cpp
     src/render/backend/context.cpp
     src/render/backend/pipeline.cpp
     src/render/backend/swapchain.cpp
-    src/render/backend/backend.cpp
     src/render/renderer.cpp)
 
 # Defines

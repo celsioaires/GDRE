@@ -112,7 +112,6 @@ namespace backend {
 
         // Physical devices
         std::vector<vk::raii::PhysicalDevice> physicalDevices = mInstance.enumeratePhysicalDevices();
-        uint32_t graphicsFamilyIndex;
 
         // Iterate
         for (const vk::raii::PhysicalDevice& device : physicalDevices) {
@@ -161,7 +160,7 @@ namespace backend {
                     device.getSurfaceSupportKHR(i, *mSurface) // ¿Surface present support?
                 ) {
                     graphicsQueueSupport = true;
-                    graphicsFamilyIndex = i;
+                    mGraphicsFamily = i;
                 }
 
                 i++;
@@ -185,7 +184,7 @@ namespace backend {
         float queuePriority = 0.5f;
 
         vk::DeviceQueueCreateInfo deviceQueueInfo{
-            .queueFamilyIndex = graphicsFamilyIndex,
+            .queueFamilyIndex = mGraphicsFamily,
             .queueCount = 1,
             .pQueuePriorities = &queuePriority
         };
@@ -219,7 +218,7 @@ namespace backend {
             spdlog::info("Device created successfully");
 
             // Retrieve graphics queue
-            mGraphicsQueue = vk::raii::Queue(mDevice, graphicsFamilyIndex, 0);
+            mGraphicsQueue = vk::raii::Queue(mDevice, mGraphicsFamily, 0);
             spdlog::info("Retrieved graphics queue successfully");
         }
         catch (const vk::SystemError& error) {

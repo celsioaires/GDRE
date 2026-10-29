@@ -5,22 +5,30 @@
 #include <spdlog/spdlog.h>
 
 namespace backend {
-    bool Pipeline::initialize(const Context& context, const std::vector<std::string>& files) {
+    bool Pipeline::initialize(const Context& context, PipelineType type, const std::vector<std::string>& files) {
         pContext = &context;
 
         // Shaders
-        for (const std::string& file : files) {
-            vk::raii::ShaderModule shader = initializeShader(file);
+        mShaders = initializeShaders(files);
 
-            if (shader == nullptr) {
-                return false;
-            }
+        // Layout
+        mLayout = initializeLayout();
 
-            mShaders.push_back(std::move(shader));
+        if (mLayout == nullptr) {
+            return false;
         }
 
-        // Graphics pipeline
-        mHandle = initializeGraphicsPipeline();
+        // Handle
+        switch (type) {
+            case PipelineType::GRAPHICS: {
+                mHandle = initializeGraphicsPipeline();
+                break;
+            }
+            case PipelineType::COMPUTE: {
+                mHandle = initializeComputePipeline();
+                break;
+            }
+        }
 
         if (mHandle == nullptr) {
             return false;
@@ -29,38 +37,65 @@ namespace backend {
         return true;
     }
 
-    vk::raii::ShaderModule Pipeline::initializeShader(const std::string& file) {
-        // Open stream
-        std::ifstream stream("shaders/compiled/" + file, std::ios::ate | std::ios::binary);
+    std::vector<vk::raii::ShaderModule> Pipeline::initializeShaders(const std::vector<std::string> &files) {
+        std::vector<vk::raii::ShaderModule> shaders;
 
-        if (!stream.is_open()) {
-            // Failed
-            spdlog::error("Failed to open shader: {}", file);
-            return nullptr;
+        for (const std::string& file : files) {
+            // Open stream
+            std::ifstream stream("shaders/compiled/" + file, std::ios::ate | std::ios::binary);
+
+            if (!stream.is_open()) {
+                // Failed
+                spdlog::error("Failed to open shader: {}", file);
+                return shaders;
+            }
+
+            // Code
+            std::vector<char> code(stream.tellg());
+
+            stream.seekg(0, std::ios::beg);
+            stream.read(code.data(), static_cast<std::streamsize>(code.size()));
+
+            // Info
+            vk::ShaderModuleCreateInfo createInfo{
+                .codeSize = code.size() * sizeof(char),
+                .pCode = reinterpret_cast<const uint32_t*>(code.data())
+            };
+
+            vk::raii::ShaderModule shader = nullptr;
+
+            try {
+                // Create shader
+                shader = vk::raii::ShaderModule(pContext->getDevice(), createInfo);
+                spdlog::info("Shader created successfully: {}", file);
+            }
+            catch (const vk::SystemError& error) {
+                // Failed
+                spdlog::error("Failed to create shader: {}\n{}", file, error.what());
+                return shaders;
+            }
+
+            shaders.push_back(std::move(shader));
         }
+        return shaders;
+    }
 
-        // Code
-        std::vector<char> code(stream.tellg());
+    vk::raii::PipelineLayout Pipeline::initializeLayout() {
+        // Layout info
+        vk::PipelineLayoutCreateInfo layoutInfo{
 
-        stream.seekg(0, std::ios::beg);
-        stream.read(code.data(), static_cast<std::streamsize>(code.size()));
-
-        // Info
-        vk::ShaderModuleCreateInfo createInfo{
-            .codeSize = code.size() * sizeof(char),
-            .pCode = reinterpret_cast<const uint32_t*>(code.data())
         };
 
-        vk::raii::ShaderModule handle = nullptr;
+        vk::raii::PipelineLayout handle = nullptr;
 
         try {
-            // Create shader
-            handle = vk::raii::ShaderModule(pContext->getDevice(), createInfo);
-            spdlog::info("Shader created successfully: {}", file);
+            // Create layout
+            handle = vk::raii::PipelineLayout(pContext->getDevice(), layoutInfo);
+            spdlog::info("Pipeline layout created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
-            spdlog::error("Failed to create shader: {}\n{}", file, error.what());
+            spdlog::error("Failed to create pipeline layout: {}", error.what());
             return nullptr;
         }
 
@@ -147,22 +182,6 @@ namespace backend {
             .pColorAttachmentFormats = &colorAttachmentFormat
         };
 
-        // Layout info
-        vk::PipelineLayoutCreateInfo layoutInfo{
-
-        };
-
-        try {
-            // Create layout
-            mLayout = vk::raii::PipelineLayout(pContext->getDevice(), layoutInfo);
-            spdlog::info("Pipeline layout created successfully");
-        }
-        catch (const vk::SystemError& error) {
-            // Failed
-            spdlog::error("Failed to create pipeline layout: {}", error.what());
-            return nullptr;
-        }
-
         // Info
         vk::GraphicsPipelineCreateInfo createInfo{
             .stageCount = static_cast<uint32_t>(stages.size()),
@@ -191,6 +210,23 @@ namespace backend {
         try {
             // Create pipeline
             handle = vk::raii::Pipeline(pContext->getDevice(), nullptr, createChain.get<vk::GraphicsPipelineCreateInfo>());
+            spdlog::info("Pipeline created successfully");
+        }
+        catch (const vk::SystemError& error) {
+            // Failed
+            spdlog::error("Failed to create pipeline: {}", error.what());
+            return nullptr;
+        }
+
+        return handle;
+    }
+
+    vk::raii::Pipeline Pipeline::initializeComputePipeline() {
+        vk::raii::Pipeline handle = nullptr;
+
+        try {
+            // Create pipeline
+            //handle = vk::raii::Pipeline(pContext->getDevice(), nullptr, );
             spdlog::info("Pipeline created successfully");
         }
         catch (const vk::SystemError& error) {

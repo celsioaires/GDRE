@@ -1,10 +1,10 @@
 #include "backend.h"
 
 namespace backend {
-    bool Backend::initialize(const WSI& wsi) {
+    bool Backend::initialize(BackendInfo info) {
         if (
-            !mContext.initialize(wsi.window) ||
-            !mSwapchain.initialize(mContext, wsi.width, wsi.height)
+            !mContext.initialize(info.window) ||
+            !mSwapchain.initialize(mContext, info.width, info.height)
         ) {
             return false;
         }
@@ -12,9 +12,14 @@ namespace backend {
         // Pipelines
         if (
             // Graphics
-            !mGraphicsPipeline.initialize(mContext, { "default.spv" })
+            !mGraphicsPipeline.initialize(mContext, PipelineType::GRAPHICS, { "default.spv" })
             // Compute
         ) {
+            return false;
+        }
+
+        // Command
+        if (!mCommand.initialize(mContext, mContext.getGraphicsFamily())) {
             return false;
         }
 

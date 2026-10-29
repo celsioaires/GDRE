@@ -3,15 +3,22 @@
 #include "context.h"
 
 namespace backend {
+    enum class PipelineType {
+        GRAPHICS,
+        COMPUTE,
+    };
+
     class Pipeline {
         const Context* pContext = nullptr;
-        vk::raii::Pipeline mHandle = nullptr;
-        vk::raii::PipelineLayout mLayout = nullptr;
         std::vector<vk::raii::ShaderModule> mShaders;
+        vk::raii::PipelineLayout mLayout = nullptr;
+        vk::raii::Pipeline mHandle = nullptr;
     public:
-        bool initialize(const Context& context, const std::vector<std::string>& files);
+        bool initialize(const Context& context, PipelineType type, const std::vector<std::string>& files);
     private:
-        vk::raii::ShaderModule initializeShader(const std::string& file);
+        std::vector<vk::raii::ShaderModule> initializeShaders(const std::vector<std::string>& files);
+        vk::raii::PipelineLayout initializeLayout();
         vk::raii::Pipeline initializeGraphicsPipeline();
+        vk::raii::Pipeline initializeComputePipeline();
     };
 }
