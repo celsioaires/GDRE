@@ -12,9 +12,11 @@ namespace core {
 
         // GLFW initialization
         if (!glfwInit()) {
-            spdlog::error("Failed to initialize GLFW!");
+            spdlog::error("Failed to initialize GLFW");
             return false;
         }
+
+        spdlog::info("GLFW initialized successfully");
 
         return true;
     }

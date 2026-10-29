@@ -2,10 +2,19 @@
 
 #include <spdlog/spdlog.h>
 
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+namespace backend {
+#if !defined (NDEBUG)
+    static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
+        vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
+        vk::DebugUtilsMessageTypeFlagsEXT type,
+        const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
+        void* pUserData
+    ) {
+        spdlog::error("Validation error: {}", pCallbackData->pMessage);
+        return vk::False;
+    }
+#endif
 
-namespace vku {
     bool Context::initialize(GLFWwindow* window) {
           // Application info
         vk::ApplicationInfo applicationInfo{
@@ -17,8 +26,18 @@ namespace vku {
         };
 
         // Instance extensions
-        uint32_t instanceExtensionCount;
-        const char** instanceExtensions = glfwGetRequiredInstanceExtensions(&instanceExtensionCount);
+        std::vector<const char*> instanceExtensions;
+
+        uint32_t glfwExtensionCount;
+        const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+        for (uint32_t i = 0; i < glfwExtensionCount; i++) {
+            instanceExtensions.push_back(glfwExtensions[i]);
+        }
+
+#if !defined (NDEBUG)
+        instanceExtensions.push_back(vk::EXTDebugUtilsExtensionName);
+#endif
 
         // Layers
         std::vector<const char*> layers;
@@ -32,37 +51,62 @@ namespace vku {
             .pApplicationInfo = &applicationInfo,
             .enabledLayerCount = static_cast<uint32_t>(layers.size()),
             .ppEnabledLayerNames = layers.data(),
-            .enabledExtensionCount = instanceExtensionCount,
-            .ppEnabledExtensionNames = instanceExtensions
+            .enabledExtensionCount = static_cast<uint32_t>(instanceExtensions.size()),
+            .ppEnabledExtensionNames = instanceExtensions.data()
         };
 
         try {
             // Create instance
-            mInstance = vk::raii::Instance(mContext, instanceInfo);
-            spdlog::info("VKU created instance successfully");
+            mInstance = vk::raii::Instance(mHandle, instanceInfo);
+            spdlog::info("Instance created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
-            spdlog::error("VKU error: {}", error.what());
+            spdlog::error("Failed to create instance: {}", error.what());
             return false;
         }
+
+#if !defined (NDEBUG)
+        // Debug messenger info
+        vk::DebugUtilsMessengerCreateInfoEXT debugMessengerInfo{
+            .messageSeverity =
+                vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+                vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
+            .messageType =
+                vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+                vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
+                vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation,
+            .pfnUserCallback = debugCallback
+        };
+
+        try {
+            // Create debug messenger
+            mDebugMessenger = vk::raii::DebugUtilsMessengerEXT(mInstance, debugMessengerInfo);
+            spdlog::info("Debug messenger created successfully");
+        }
+        catch (const vk::SystemError& error) {
+            // Failed
+            spdlog::error("Failed to create debug messenger: {}", error.what());
+            return false;
+        }
+#endif
 
         // Surface
         VkSurfaceKHR surface;
 
         if (glfwCreateWindowSurface(*mInstance, window, nullptr, &surface) != VK_SUCCESS) {
-            spdlog::error("VKU failed to create GLFW surface");
+            spdlog::error("Failed to create GLFW surface");
             return false;
         }
 
         try {
             // Create surface
             mSurface = vk::raii::SurfaceKHR(mInstance, surface);
-            spdlog::info("VKU created surface successfully");
+            spdlog::info("Surface created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
-            spdlog::error("VKU error: {}", error.what());
+            spdlog::error("Failed to create surface: {}", error.what());
             return false;
         }
 
@@ -79,11 +123,21 @@ namespace vku {
                 vulkan14Support = true;
             }
 
-            // Features support (dynamic rendering)
-            vk::StructureChain<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceVulkan13Features> features =
-                device.getFeatures2<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceVulkan13Features>();
+            // Features support (shaderDrawParameters, dynamic rendering)
+            vk::StructureChain<
+                vk::PhysicalDeviceFeatures2,
+                vk::PhysicalDeviceVulkan11Features,
+                vk::PhysicalDeviceVulkan13Features
+            > supportedFeatures = device.getFeatures2<
+                vk::PhysicalDeviceFeatures2,
+                vk::PhysicalDeviceVulkan11Features,
+                vk::PhysicalDeviceVulkan13Features
+            >();
 
-            if (features.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering) {
+            if (
+                supportedFeatures.get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters &&
+                supportedFeatures.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering
+            ) {
                 featuresSupport = true;
             }
 
@@ -116,14 +170,14 @@ namespace vku {
             // ¿Support?
             if (vulkan14Support && featuresSupport && swapchainSupport && graphicsQueueSupport) {
                 mPhysicalDevice = device;
-                spdlog::info("VKU selected physical device successfully");
+                spdlog::info("Physical device selected successfully");
                 break;
             }
         }
 
         // ¿Failed?
         if (mPhysicalDevice == nullptr) {
-            spdlog::error("VKU failed to select physical device");
+            spdlog::error("Failed to select physical device");
             return false;
         }
 
@@ -136,11 +190,23 @@ namespace vku {
             .pQueuePriorities = &queuePriority
         };
 
+        // Device features (shaderDrawParameters, dynamic rendering)
+        vk::StructureChain<
+            vk::PhysicalDeviceFeatures2,
+            vk::PhysicalDeviceVulkan11Features,
+            vk::PhysicalDeviceVulkan13Features
+        > deviceFeatures = {
+            {},
+            { .shaderDrawParameters = true },
+            { .dynamicRendering = true },
+        };
+
         // Device extensions
         std::vector<const char*> deviceExtensions{ vk::KHRSwapchainExtensionName };
 
         // Device info
         vk::DeviceCreateInfo deviceInfo{
+            .pNext = &deviceFeatures.get<vk::PhysicalDeviceFeatures2>(),
             .queueCreateInfoCount = 1,
             .pQueueCreateInfos = &deviceQueueInfo,
             .enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size()),
@@ -150,15 +216,15 @@ namespace vku {
         try {
             // Create device
             mDevice = vk::raii::Device(mPhysicalDevice, deviceInfo);
-            spdlog::info("VKU created device successfully");
+            spdlog::info("Device created successfully");
 
             // Retrieve graphics queue
             mGraphicsQueue = vk::raii::Queue(mDevice, graphicsFamilyIndex, 0);
-            spdlog::info("VKU retrieved graphics queue successfully");
+            spdlog::info("Retrieved graphics queue successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
-            spdlog::error("VKU error: {}", error.what());
+            spdlog::error("Failed to create device: {}", error.what());
             return false;
         }
 

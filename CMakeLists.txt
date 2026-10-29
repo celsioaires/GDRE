@@ -23,10 +23,12 @@ if (ENABLE_CPP20_MODULE)
 
     set_target_properties(VulkanCppModule PROPERTIES CXX_MODULE_STD ON)
 
+    # Defines
     target_compile_definitions(VulkanCppModule PUBLIC
         VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
         VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1)
 
+    # Sources
     target_sources(VulkanCppModule PUBLIC
         FILE_SET cxx_modules TYPE CXX_MODULES
         BASE_DIRS "${Vulkan_INCLUDE_DIR}"
@@ -43,7 +45,7 @@ add_subdirectory(libs/glfw)
 add_subdirectory(libs/glm)
 add_subdirectory(libs/fastgltf)
 
-# GDRE
+# GDRE executable
 add_executable(GDRE
     # src
     src/application.cpp
@@ -58,17 +60,20 @@ add_executable(GDRE
     # load
     src/load/loader.cpp
     # render
-    src/render/vku/context.cpp
-    src/render/vku/swapchain.cpp
-    src/render/vku/vku.cpp
+    src/render/backend/context.cpp
+    src/render/backend/pipeline.cpp
+    src/render/backend/swapchain.cpp
+    src/render/backend/backend.cpp
     src/render/renderer.cpp)
 
+# Defines
 target_compile_definitions(GDRE PRIVATE VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1)
 
 if (ENABLE_CPP20_MODULE)
     target_compile_definitions(GDRE PRIVATE USE_CPP20_MODULES)
 endif()
 
+# ImGui sources
 target_sources(GDRE PRIVATE
     libs/imgui/imgui.cpp
     libs/imgui/imgui_draw.cpp
@@ -78,14 +83,37 @@ target_sources(GDRE PRIVATE
 target_include_directories(GDRE PRIVATE
     libs/imgui)
 
+# GDRE executable links
 target_link_libraries(GDRE PRIVATE
     spdlog::spdlog
     glfw
     glm::glm
     fastgltf::fastgltf)
 
+# GDRE Cpp module
 if (ENABLE_CPP20_MODULE)
     target_link_libraries(GDRE PRIVATE Vulkan::cppm)
 else()
     target_link_libraries(GDRE PRIVATE Vulkan::Vulkan)
 endif()
+
+# Slang shader compilation
+function(add_slang_shader_target TARGET)
+    set(SHADERS_DIR "${CMAKE_SOURCE_DIR}/shaders")
+    set(SHADER_OUTPUT "${SHADERS_DIR}/compiled/default.spv")
+    set(SHADER_SOURCE "${SHADERS_DIR}/default.slang")
+    set(SHADER_SCRIPT "${SHADERS_DIR}/compile.sh")
+
+    add_custom_command(
+        OUTPUT "${SHADER_OUTPUT}"
+        COMMAND bash "${SHADER_SCRIPT}"
+        WORKING_DIRECTORY "${SHADERS_DIR}"
+        DEPENDS "${SHADER_SCRIPT}" "${SHADER_SOURCE}"
+        COMMENT "Compiling Slang shaders"
+        VERBATIM)
+
+    add_custom_target(${TARGET} DEPENDS "${SHADER_OUTPUT}")
+endfunction()
+
+add_slang_shader_target(compile_shaders)
+add_dependencies(GDRE compile_shaders)

@@ -28,8 +28,6 @@ namespace src {
     }
 
     void Engine::run() {
-        mWindow.show();
-
         while (mWindow.isOpen()) {
             mPlatform.pollEvents();
 

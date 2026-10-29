@@ -6,12 +6,16 @@
 #include <vulkan/vulkan_raii.hpp>
 #endif
 
-struct GLFWwindow;
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
-namespace vku {
+namespace backend {
     class Context {
-        vk::raii::Context mContext;
+        vk::raii::Context mHandle;
         vk::raii::Instance mInstance = nullptr;
+#if !defined (NDEBUG)
+        vk::raii::DebugUtilsMessengerEXT mDebugMessenger = nullptr;
+#endif
         vk::raii::SurfaceKHR mSurface = nullptr;
         vk::raii::PhysicalDevice mPhysicalDevice = nullptr;
         vk::raii::Device mDevice = nullptr;
@@ -22,5 +26,7 @@ namespace vku {
         const vk::raii::SurfaceKHR& getSurface() const { return mSurface; }
         const vk::raii::PhysicalDevice& getPhysicalDevice() const { return mPhysicalDevice; }
         const vk::raii::Device& getDevice() const { return mDevice; }
+    private:
+
     };
 }

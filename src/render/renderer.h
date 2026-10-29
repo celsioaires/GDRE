@@ -2,11 +2,11 @@
 
 #include "../gui/window.h"
 
-#include "vku/vku.h"
+#include "backend/backend.h"
 
 namespace render {
     class Renderer {
-        vku::VKU mVKU;
+        backend::Backend mBackend;
     public:
         bool initialize(const gui::Window& window);
     };

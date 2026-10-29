@@ -8,28 +8,25 @@
 namespace gui {
     bool Window::initialize() {
         // Hints
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // Vulkan
-        glfwWindowHint(GLFW_MAXIMIZED, true); // Maximized
-        glfwWindowHint(GLFW_VISIBLE, false); // Hidden
+        glfwWindowHint(GLFW_CLIENT_API, false); // Vulkan
+        glfwWindowHint(GLFW_RESIZABLE, false); // No resizable
 
-        // Create GLFW window
-        mHandle = glfwCreateWindow(800, 600, "GDRE", nullptr, nullptr);
+        // Create window
+        mHandle = glfwCreateWindow(mWidth, mHeight, "GDRE", nullptr, nullptr);
 
-        // ¿Failed?
         if (!mHandle) {
-            spdlog::error("Failed to create window!");
+            // Failed
+            spdlog::error("Failed to create window");
             return false;
         }
+
+        spdlog::info("Window created successfully");
 
         return true;
     }
 
     void Window::cleanup() {
         glfwDestroyWindow(mHandle);
-    }
-
-    void Window::show() {
-        glfwShowWindow(mHandle);
     }
 
     bool Window::isOpen() {
