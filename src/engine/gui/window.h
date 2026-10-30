@@ -6,8 +6,8 @@
 namespace gui {
     class Window {
         GLFWwindow* mHandle = nullptr;
-        int mWidth = 1366;
-        int mHeight = 768;
+        int mWidth = 800;
+        int mHeight = 600;
     public:
         bool initialize();
         void cleanup();

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "engine.h"
+#include "engine/engine.h"
 
 namespace src {
     class Application {
-        Engine mEngine;
+        engine::Engine mEngine;
     public:
         bool execute();
     };

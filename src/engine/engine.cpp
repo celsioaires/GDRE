@@ -1,6 +1,6 @@
 #include "engine.h"
 
-namespace src {
+namespace engine {
     bool Engine::initialize() {
         if (
             !mPlatform.initialize() ||
@@ -36,7 +36,7 @@ namespace src {
                 continue;
             }
 
-            mRenderer.test();
+            mRenderer.drawMesh();
         }
     }
 }

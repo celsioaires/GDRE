@@ -3,20 +3,17 @@
 #include "context.h"
 
 namespace backend {
-    enum class PipelineType {
-        GRAPHICS,
-        COMPUTE,
-    };
-
     class Pipeline {
         std::vector<vk::raii::ShaderModule> mShaders;
         vk::raii::PipelineLayout mLayout = nullptr;
         vk::raii::Pipeline mHandle = nullptr;
+        vk::PipelineBindPoint mBindPoint;
     public:
-        bool initialize(const Context& context, PipelineType type, const std::vector<std::string>& files);
+        bool initialize(const Context& context, vk::PipelineBindPoint bindPoint, const std::vector<std::string>& files);
 
         // Getters
-        const vk::raii::Pipeline& getHandle() { return mHandle; }
+        const vk::raii::Pipeline& getHandle() const { return mHandle; }
+        vk::PipelineBindPoint getBindPoint() const { return mBindPoint; }
     private:
         inline static const Context* sContext = nullptr; // const Context& context
 

@@ -5,7 +5,6 @@
 namespace backend {
     class Swapchain {
         vk::Extent2D mExtent;
-        inline static const vk::Format sFormat = vk::Format::eB8G8R8A8Srgb;
         vk::raii::SwapchainKHR mHandle = nullptr;
         std::vector<vk::Image> mImages;
         std::vector<vk::raii::ImageView> mViews;
@@ -13,12 +12,13 @@ namespace backend {
         bool initialize(const Context& context, uint32_t width, uint32_t height);
 
         // Getters
-        const vk::Extent2D& getExtent() { return mExtent; }
-        const vk::raii::SwapchainKHR& getHandle() { return mHandle; }
-        const std::vector<vk::Image>& getImages() { return mImages; }
-        const std::vector<vk::raii::ImageView>& getViews() { return mViews; }
+        const vk::Extent2D& getExtent() const { return mExtent; }
+        const vk::raii::SwapchainKHR& getHandle() const { return mHandle; }
+        const std::vector<vk::Image>& getImages() const { return mImages; }
+        const std::vector<vk::raii::ImageView>& getViews() const { return mViews; }
     private:
         inline static const Context* sContext = nullptr; // const Context& context
+        inline static const vk::Format sFormat = vk::Format::eB8G8R8A8Srgb;
 
         // Initializers
         static vk::raii::SwapchainKHR initializeSwapchain(const vk::Extent2D& extent);

@@ -6,7 +6,7 @@
 #include "command.h"
 
 namespace backend {
-    struct BackendInfo {
+    struct Info {
         GLFWwindow* window = nullptr;
         uint32_t width = 0;
         uint32_t height = 0;
@@ -18,9 +18,9 @@ namespace backend {
         Pipeline mDefaultPipeline;
         Command mCommand;
     public:
-        bool initialize(BackendInfo info);
+        bool initialize(Info info);
         void cleanup();
 
-        void test();
+        void renderTriangle();
     };
 }

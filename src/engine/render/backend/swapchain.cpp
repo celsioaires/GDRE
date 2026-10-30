@@ -33,7 +33,7 @@ namespace backend {
         const vk::raii::SurfaceKHR& surface = sContext->getSurface();
 
         // Info
-        vk::SwapchainCreateInfoKHR createInfo{
+        const vk::SwapchainCreateInfoKHR createInfo{
             .surface = *surface,
             .minImageCount = 3,
             .imageFormat = sFormat,

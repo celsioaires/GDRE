@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 
 namespace backend {
-    bool Backend::initialize(BackendInfo info) {
+    bool Backend::initialize(Info info) {
         if (
             !mContext.initialize(info.window) ||
             !mSwapchain.initialize(mContext, info.width, info.height)
@@ -18,7 +18,7 @@ namespace backend {
         // Pipelines
         if (
             // Graphics
-            !mDefaultPipeline.initialize(mContext, PipelineType::GRAPHICS, { "default.spv" })
+            !mDefaultPipeline.initialize(mContext, vk::PipelineBindPoint::eGraphics, { "default.spv" })
             // Compute
         ) {
             return false;
@@ -40,7 +40,7 @@ namespace backend {
         }
     }
 
-    void Backend::test() {
+    void Backend::renderTriangle() {
         const vk::raii::Device& device = mContext.getDevice();
         const vk::raii::Fence& submitFence = mContext.getSubmitFence();
         const vk::raii::SwapchainKHR& swapchain = mSwapchain.getHandle();
@@ -85,42 +85,27 @@ namespace backend {
         // Image barrier
         mCommand.pipelineBarrier(swapchainImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
 
-        // Rendering color attachment
-        const vk::RenderingAttachmentInfo colorAttachment{
-            .imageView = mSwapchain.getViews()[imageIndex],
-            .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-            .loadOp = vk::AttachmentLoadOp::eClear
-        };
-
-        // Rendering info
-        const vk::RenderingInfo renderingInfo{
-            .renderArea = { .extent = swapchainExtent },
-            .layerCount = 1,
-            .colorAttachmentCount = 1,
-            .pColorAttachments = &colorAttachment
+        // Rendering attachments
+        const std::vector<vk::RenderingAttachmentInfo> renderingAttachments{
+            // Color
+            {
+                .imageView = mSwapchain.getViews()[imageIndex],
+                .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+                .loadOp = vk::AttachmentLoadOp::eClear
+            }
         };
 
         // Begin rendering
-        commandBuffer.beginRendering(renderingInfo);
+        mCommand.beginRendering(swapchainExtent, renderingAttachments);
 
         // Bind default pipeline
-        commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *mDefaultPipeline.getHandle());
+        commandBuffer.bindPipeline(mDefaultPipeline.getBindPoint(), *mDefaultPipeline.getHandle());
 
         // Set viewport
-        const vk::Viewport viewport{
-            .width = static_cast<float>(swapchainExtent.width),
-            .height = static_cast<float>(swapchainExtent.height),
-            .maxDepth = 1.0f,
-        };
-
-        commandBuffer.setViewport(0, viewport);
+        mCommand.setViewport(swapchainExtent);
 
         // Set scissor
-        const vk::Rect2D scissor{
-            .extent = swapchainExtent
-        };
-
-        commandBuffer.setScissor(0, scissor);
+        commandBuffer.setScissor(0, vk::Rect2D{ .extent = swapchainExtent });
 
         // Draw
         commandBuffer.draw(3, 1, 0, 0);
@@ -136,6 +121,7 @@ namespace backend {
 
             const vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
+            // Submit info
             const vk::SubmitInfo submitInfo{
                 .waitSemaphoreCount = 1,
                 .pWaitSemaphores = &*acquireSemaphore,
@@ -146,8 +132,10 @@ namespace backend {
                 .pSignalSemaphores = &*submitSemaphore
             };
 
+            // Submit command buffer
             graphicsQueue.submit(submitInfo, *submitFence);
 
+            // Present info
             const vk::PresentInfoKHR presentInfo{
                 .waitSemaphoreCount = 1,
                 .pWaitSemaphores = &*submitSemaphore,
@@ -156,6 +144,7 @@ namespace backend {
                 .pImageIndices = &imageIndex
             };
 
+            // Present swapchain
             vk::Result presentResult = graphicsQueue.presentKHR(presentInfo);
 
             if (presentResult != vk::Result::eSuccess) {

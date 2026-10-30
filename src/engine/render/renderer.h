@@ -11,6 +11,6 @@ namespace render {
         bool initialize(const gui::Window& window);
         void cleanup();
 
-        void test();
+        void drawMesh();
     };
 }

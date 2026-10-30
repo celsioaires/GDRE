@@ -2,7 +2,7 @@
 
 namespace render {
     bool Renderer::initialize(const gui::Window& window) {
-        backend::BackendInfo wsi{
+        backend::Info wsi{
             .window = window.getHandle(),
             .width = static_cast<uint32_t>(window.getWidth()),
             .height = static_cast<uint32_t>(window.getHeight()),
@@ -19,7 +19,7 @@ namespace render {
         mBackend.cleanup();
     }
 
-    void Renderer::test() {
-        mBackend.test();
+    void Renderer::drawMesh() {
+        mBackend.renderTriangle();
     }
 }

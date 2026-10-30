@@ -49,23 +49,25 @@ add_subdirectory(libs/fastgltf)
 add_executable(GDRE
     # src
     src/application.cpp
-    src/engine.cpp
     src/main.cpp
-    # core
-    src/core/platform.cpp
-    src/core/time.cpp
-    # gui
-    src/gui/gui.cpp
-    src/gui/window.cpp
-    # load
-    src/load/loader.cpp
-    # render
-    src/render/backend/backend.cpp
-    src/render/backend/command.cpp
-    src/render/backend/context.cpp
-    src/render/backend/pipeline.cpp
-    src/render/backend/swapchain.cpp
-    src/render/renderer.cpp)
+    # engine
+    src/engine/engine.cpp
+    # engine core
+    src/engine/core/platform.cpp
+    src/engine/core/time.cpp
+    # engine gui
+    src/engine/gui/gui.cpp
+    src/engine/gui/window.cpp
+    # engine load
+    src/engine/load/loader.cpp
+    # engine render
+    src/engine/render/backend/backend.cpp
+    src/engine/render/backend/buffer.cpp
+    src/engine/render/backend/command.cpp
+    src/engine/render/backend/context.cpp
+    src/engine/render/backend/pipeline.cpp
+    src/engine/render/backend/swapchain.cpp
+    src/engine/render/renderer.cpp)
 
 # Defines
 target_compile_definitions(GDRE PRIVATE VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1)

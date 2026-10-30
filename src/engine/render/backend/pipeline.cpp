@@ -5,8 +5,9 @@
 #include <spdlog/spdlog.h>
 
 namespace backend {
-    bool Pipeline::initialize(const Context& context, PipelineType type, const std::vector<std::string>& files) {
+    bool Pipeline::initialize(const Context& context, vk::PipelineBindPoint bindPoint, const std::vector<std::string>& files) {
         sContext = &context;
+        mBindPoint = bindPoint;
 
         // Shaders
         mShaders = initializeShaders(files);
@@ -19,12 +20,12 @@ namespace backend {
         }
 
         // Handle
-        switch (type) {
-            case PipelineType::GRAPHICS: {
+        switch (bindPoint) {
+            case vk::PipelineBindPoint::eGraphics: {
                 mHandle = initializeGraphicsPipeline(mShaders, mLayout);
                 break;
             }
-            case PipelineType::COMPUTE: {
+            case vk::PipelineBindPoint::eCompute: {
                 mHandle = initializeComputePipeline();
                 break;
             }
@@ -57,7 +58,7 @@ namespace backend {
             stream.read(code.data(), static_cast<std::streamsize>(code.size()));
 
             // Info
-            vk::ShaderModuleCreateInfo createInfo{
+            const vk::ShaderModuleCreateInfo createInfo{
                 .codeSize = code.size() * sizeof(char),
                 .pCode = reinterpret_cast<const uint32_t*>(code.data())
             };
@@ -83,7 +84,7 @@ namespace backend {
 
     vk::raii::PipelineLayout Pipeline::initializeLayout() {
         // Layout info
-        vk::PipelineLayoutCreateInfo layoutInfo{
+        const vk::PipelineLayoutCreateInfo layoutInfo{
 
         };
 
@@ -108,7 +109,7 @@ namespace backend {
         std::vector<vk::PipelineShaderStageCreateInfo> stages;
 
         // Vertex stage info
-        vk::PipelineShaderStageCreateInfo vertexStage{
+        const vk::PipelineShaderStageCreateInfo vertexStage{
             .stage = vk::ShaderStageFlagBits::eVertex,
             .module = shaders[0],
             .pName = "vertexMain"
@@ -117,7 +118,7 @@ namespace backend {
         stages.push_back(vertexStage);
 
         // fragment stage info
-        vk::PipelineShaderStageCreateInfo fragmentStage{
+        const vk::PipelineShaderStageCreateInfo fragmentStage{
             .stage = vk::ShaderStageFlagBits::eFragment,
             .module = shaders[0],
             .pName = "fragmentMain"
@@ -126,50 +127,50 @@ namespace backend {
         stages.push_back(fragmentStage);
 
         // Dynamic states
-        std::vector<vk::DynamicState> dynamicStates{
+        const std::vector<vk::DynamicState> dynamicStates{
             vk::DynamicState::eViewport,
             vk::DynamicState::eScissor
         };
 
         // Dynamic info
-        vk::PipelineDynamicStateCreateInfo dynamicInfo{
+        const vk::PipelineDynamicStateCreateInfo dynamicInfo{
             .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
             .pDynamicStates = dynamicStates.data()
         };
 
         // Vertex input info
-        vk::PipelineVertexInputStateCreateInfo vertexInputInfo{
+        const vk::PipelineVertexInputStateCreateInfo vertexInputInfo{
 
         };
 
         // Input assembly info
-        vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo{
+        const vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo{
             .topology = vk::PrimitiveTopology::eTriangleList
         };
 
         // Viewport info
-        vk::PipelineViewportStateCreateInfo viewportInfo{
+        const vk::PipelineViewportStateCreateInfo viewportInfo{
             .viewportCount = 1,
             .scissorCount = 1
         };
 
         // Rasterization info
-        vk::PipelineRasterizationStateCreateInfo rasterizationInfo{
+        const vk::PipelineRasterizationStateCreateInfo rasterizationInfo{
             .lineWidth = 1.0f
         };
 
         // Multisample info
-        vk::PipelineMultisampleStateCreateInfo multisampleInfo{
+        const vk::PipelineMultisampleStateCreateInfo multisampleInfo{
             .rasterizationSamples = vk::SampleCountFlagBits::e1
         };
 
         // Depth stencil info
-        vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{
+        const vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{
 
         };
 
         // Color blend attachment
-        vk::PipelineColorBlendAttachmentState colorBlendAttachment{
+        const vk::PipelineColorBlendAttachmentState colorBlendAttachment{
             .colorWriteMask =
                 vk::ColorComponentFlagBits::eR |
                 vk::ColorComponentFlagBits::eG |
@@ -178,22 +179,22 @@ namespace backend {
         };
 
         // Color blend info
-        vk::PipelineColorBlendStateCreateInfo colorBlendInfo{
+        const vk::PipelineColorBlendStateCreateInfo colorBlendInfo{
             .logicOp = vk::LogicOp::eCopy,
             .attachmentCount = 1,
             .pAttachments = &colorBlendAttachment
         };
 
         // Rendering info
-        vk::Format colorAttachmentFormat = vk::Format::eB8G8R8A8Srgb;
+        const vk::Format colorAttachmentFormat = vk::Format::eB8G8R8A8Srgb;
 
-        vk::PipelineRenderingCreateInfo renderingInfo{
+        const vk::PipelineRenderingCreateInfo renderingInfo{
             .colorAttachmentCount = 1,
             .pColorAttachmentFormats = &colorAttachmentFormat
         };
 
         // Info
-        vk::GraphicsPipelineCreateInfo createInfo{
+        const vk::GraphicsPipelineCreateInfo createInfo{
             .stageCount = static_cast<uint32_t>(stages.size()),
             .pStages = stages.data(),
             .pVertexInputState = &vertexInputInfo,
@@ -207,7 +208,7 @@ namespace backend {
         };
 
         // Chain
-        vk::StructureChain<
+        const vk::StructureChain<
             vk::GraphicsPipelineCreateInfo,
             vk::PipelineRenderingCreateInfo
         > createChain{

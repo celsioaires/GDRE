@@ -6,7 +6,7 @@
 #include "load/loader.h"
 #include "render/renderer.h"
 
-namespace src {
+namespace engine {
     class Engine {
         core::Platform mPlatform;
         gui::Window mWindow;

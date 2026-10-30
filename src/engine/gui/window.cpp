@@ -11,7 +11,7 @@ namespace gui {
         glfwWindowHint(GLFW_CLIENT_API, false); // Vulkan
 
         // Create window
-        mHandle = glfwCreateWindow(mWidth, mHeight, "GDRE", glfwGetPrimaryMonitor(), nullptr);
+        mHandle = glfwCreateWindow(mWidth, mHeight, "GDRE", nullptr, nullptr);
 
         if (!mHandle) {
             // Failed

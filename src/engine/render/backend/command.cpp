@@ -50,9 +50,32 @@ namespace backend {
         mBuffer.pipelineBarrier2(info);
     }
 
+    void Command::beginRendering(vk::Extent2D extent, const std::vector<vk::RenderingAttachmentInfo>& attachments) {
+        // Info
+        const vk::RenderingInfo info{
+            .renderArea = { .extent = extent },
+            .layerCount = 1,
+            .colorAttachmentCount = static_cast<uint32_t>(attachments.size()),
+            .pColorAttachments = attachments.data()
+        };
+
+        mBuffer.beginRendering(info);
+    }
+
+    void Command::setViewport(vk::Extent2D extent) {
+        // Info
+        const vk::Viewport viewport{
+            .width = static_cast<float>(extent.width),
+            .height = static_cast<float>(extent.height),
+            .maxDepth = 1.0f,
+        };
+
+        mBuffer.setViewport(0, viewport);
+    }
+
     vk::raii::CommandPool Command::initializePool(uint32_t queueFamily) {
         // Info
-        vk::CommandPoolCreateInfo createInfo{
+        const vk::CommandPoolCreateInfo createInfo{
             .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
             .queueFamilyIndex = queueFamily
         };
@@ -75,7 +98,7 @@ namespace backend {
 
     vk::raii::CommandBuffer Command::initializeBuffer(const vk::raii::CommandPool& pool) {
         // Info
-        vk::CommandBufferAllocateInfo allocateInfo{
+        const vk::CommandBufferAllocateInfo allocateInfo{
             .commandPool = pool,
             .commandBufferCount = 1
         };

@@ -22,7 +22,7 @@ namespace backend {
 
     vk::raii::Instance Context::initializeInstance(const vk::raii::Context& context) {
         // Application info
-        vk::ApplicationInfo applicationInfo{
+        const vk::ApplicationInfo applicationInfo{
             .pApplicationName = "GDRE",
             .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
             .pEngineName = "GDRE",
@@ -52,7 +52,7 @@ namespace backend {
 #endif
 
         // Info
-        vk::InstanceCreateInfo createInfo{
+        const vk::InstanceCreateInfo createInfo{
             .pApplicationInfo = &applicationInfo,
             .enabledLayerCount = static_cast<uint32_t>(layers.size()),
             .ppEnabledLayerNames = layers.data(),
@@ -78,7 +78,7 @@ namespace backend {
 
     vk::raii::DebugUtilsMessengerEXT Context::initializeDebugMessenger(const vk::raii::Instance& instance) {
         // Info
-        vk::DebugUtilsMessengerCreateInfoEXT createInfo{
+        const vk::DebugUtilsMessengerCreateInfoEXT createInfo{
             .messageSeverity =
                 vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
                 vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
@@ -134,7 +134,7 @@ namespace backend {
         vk::raii::PhysicalDevice handle = nullptr;
 
         // Physical devices
-        std::vector<vk::raii::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
+        const std::vector<vk::raii::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
 
         // Iterate
         for (const vk::raii::PhysicalDevice& device : devices) {
@@ -146,7 +146,7 @@ namespace backend {
             }
 
             // Features support
-            vk::StructureChain<
+            const vk::StructureChain<
                 vk::PhysicalDeviceFeatures2,
                 vk::PhysicalDeviceVulkan11Features,
                 vk::PhysicalDeviceVulkan13Features
@@ -165,7 +165,7 @@ namespace backend {
             }
 
             // Swapchain extension support
-            std::vector<vk::ExtensionProperties> extensionProperties = device.enumerateDeviceExtensionProperties();
+            const std::vector<vk::ExtensionProperties> extensionProperties = device.enumerateDeviceExtensionProperties();
 
             for (const vk::ExtensionProperties& extensionProperty : extensionProperties) {
                 if (strcmp(extensionProperty.extensionName, vk::KHRSwapchainExtensionName) == 0) {
@@ -174,7 +174,7 @@ namespace backend {
             }
 
             // Graphics queue support
-            std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
+            const std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
 
             int i = 0;
 
@@ -209,16 +209,16 @@ namespace backend {
 
     vk::raii::Device Context::initializeDevice(const vk::raii::PhysicalDevice& physicalDevice, vk::raii::Queue& queue, uint32_t queueFamily) {
         // Queue
-        float queuePriority = 0.5f;
+        const float queuePriority = 0.5f;
 
-        vk::DeviceQueueCreateInfo deviceQueueInfo{
+        const vk::DeviceQueueCreateInfo deviceQueueInfo{
             .queueFamilyIndex = queueFamily,
             .queueCount = 1,
             .pQueuePriorities = &queuePriority
         };
 
         // Features
-        vk::StructureChain<
+        const vk::StructureChain<
             vk::PhysicalDeviceFeatures2,
             vk::PhysicalDeviceVulkan11Features,
             vk::PhysicalDeviceVulkan13Features
@@ -232,7 +232,7 @@ namespace backend {
         };
 
         // Extensions
-        std::vector<const char*> deviceExtensions{ vk::KHRSwapchainExtensionName };
+        const std::vector<const char*> deviceExtensions{ vk::KHRSwapchainExtensionName };
 
         // Info
         vk::DeviceCreateInfo createInfo{
@@ -265,7 +265,7 @@ namespace backend {
 
     vk::raii::Fence Context::initializeFence(const vk::raii::Device& device) {
         // Info
-        vk::FenceCreateInfo createInfo{
+        const vk::FenceCreateInfo createInfo{
             .flags = vk::FenceCreateFlags::BitsType::eSignaled
         };
 
@@ -287,7 +287,7 @@ namespace backend {
 
     vk::raii::Semaphore Context::initializeSemaphore(const vk::raii::Device& device) {
         // Info
-        vk::SemaphoreCreateInfo info{};
+        const vk::SemaphoreCreateInfo info{};
 
         vk::raii::Semaphore handle = nullptr;
 
