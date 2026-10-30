@@ -9,5 +9,8 @@ namespace render {
         backend::Backend mBackend;
     public:
         bool initialize(const gui::Window& window);
+        void cleanup();
+
+        void test();
     };
 }

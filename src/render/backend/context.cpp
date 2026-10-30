@@ -3,20 +3,25 @@
 #include <spdlog/spdlog.h>
 
 namespace backend {
+    bool Context::initialize(GLFWwindow* window) {
+        mInstance = initializeInstance(mHandle);
+
 #if !defined (NDEBUG)
-    static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
-        vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
-        vk::DebugUtilsMessageTypeFlagsEXT type,
-        const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
-        void* pUserData
-    ) {
-        spdlog::error("Validation error: {}", pCallbackData->pMessage);
-        return vk::False;
-    }
+        mDebugMessenger = initializeDebugMessenger(mInstance);
 #endif
 
-    bool Context::initialize(GLFWwindow* window) {
-          // Application info
+        mSurface = initializeSurface(mInstance, window);
+        mPhysicalDevice = initializePhysicalDevice(mInstance, mSurface, mGraphicsFamily);
+        mDevice = initializeDevice(mPhysicalDevice, mGraphicsQueue, mGraphicsFamily);
+        mSubmitFence = initializeFence(mDevice);
+        mAcquireSemaphore = initializeSemaphore(mDevice);
+        mSubmitSemaphore = initializeSemaphore(mDevice);
+
+        return true;
+    }
+
+    vk::raii::Instance Context::initializeInstance(const vk::raii::Context& context) {
+        // Application info
         vk::ApplicationInfo applicationInfo{
             .pApplicationName = "GDRE",
             .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
@@ -25,18 +30,18 @@ namespace backend {
             .apiVersion = vk::ApiVersion14
         };
 
-        // Instance extensions
-        std::vector<const char*> instanceExtensions;
+        // Extensions
+        std::vector<const char*> extensions;
 
         uint32_t glfwExtensionCount;
         const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
         for (uint32_t i = 0; i < glfwExtensionCount; i++) {
-            instanceExtensions.push_back(glfwExtensions[i]);
+            extensions.push_back(glfwExtensions[i]);
         }
 
 #if !defined (NDEBUG)
-        instanceExtensions.push_back(vk::EXTDebugUtilsExtensionName);
+        extensions.push_back(vk::EXTDebugUtilsExtensionName);
 #endif
 
         // Layers
@@ -46,29 +51,34 @@ namespace backend {
         layers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
 
-        // Instance info
-        vk::InstanceCreateInfo instanceInfo{
+        // Info
+        vk::InstanceCreateInfo createInfo{
             .pApplicationInfo = &applicationInfo,
             .enabledLayerCount = static_cast<uint32_t>(layers.size()),
             .ppEnabledLayerNames = layers.data(),
-            .enabledExtensionCount = static_cast<uint32_t>(instanceExtensions.size()),
-            .ppEnabledExtensionNames = instanceExtensions.data()
+            .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+            .ppEnabledExtensionNames = extensions.data()
         };
+
+        vk::raii::Instance handle = nullptr;
 
         try {
             // Create instance
-            mInstance = vk::raii::Instance(mHandle, instanceInfo);
+            handle = vk::raii::Instance(context, createInfo);
             spdlog::info("Instance created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create instance: {}", error.what());
-            return false;
+            return nullptr;
         }
 
-#if !defined (NDEBUG)
-        // Debug messenger info
-        vk::DebugUtilsMessengerCreateInfoEXT debugMessengerInfo{
+        return handle;
+    }
+
+    vk::raii::DebugUtilsMessengerEXT Context::initializeDebugMessenger(const vk::raii::Instance& instance) {
+        // Info
+        vk::DebugUtilsMessengerCreateInfoEXT createInfo{
             .messageSeverity =
                 vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
                 vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
@@ -79,42 +89,55 @@ namespace backend {
             .pfnUserCallback = debugCallback
         };
 
+        vk::raii::DebugUtilsMessengerEXT handle = nullptr;
+
         try {
             // Create debug messenger
-            mDebugMessenger = vk::raii::DebugUtilsMessengerEXT(mInstance, debugMessengerInfo);
+            handle = vk::raii::DebugUtilsMessengerEXT(instance, createInfo);
             spdlog::info("Debug messenger created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create debug messenger: {}", error.what());
-            return false;
+            return nullptr;
         }
-#endif
 
+        return handle;
+    }
+
+    vk::raii::SurfaceKHR Context::initializeSurface(const vk::raii::Instance& instance, GLFWwindow* window) {
         // Surface
         VkSurfaceKHR surface;
 
-        if (glfwCreateWindowSurface(*mInstance, window, nullptr, &surface) != VK_SUCCESS) {
-            spdlog::error("Failed to create GLFW surface");
-            return false;
+        if (glfwCreateWindowSurface(*instance, window, nullptr, &surface) != VK_SUCCESS) {
+            spdlog::error("Failed to create surface");
+            return nullptr;
         }
+
+        vk::raii::SurfaceKHR handle = nullptr;
 
         try {
             // Create surface
-            mSurface = vk::raii::SurfaceKHR(mInstance, surface);
+            handle = vk::raii::SurfaceKHR(instance, surface);
             spdlog::info("Surface created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create surface: {}", error.what());
-            return false;
+            return nullptr;
         }
 
+        return handle;
+    }
+
+    vk::raii::PhysicalDevice Context::initializePhysicalDevice(const vk::raii::Instance &instance, const vk::raii::SurfaceKHR& surface, uint32_t& graphicsFamily) {
+        vk::raii::PhysicalDevice handle = nullptr;
+
         // Physical devices
-        std::vector<vk::raii::PhysicalDevice> physicalDevices = mInstance.enumeratePhysicalDevices();
+        std::vector<vk::raii::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
 
         // Iterate
-        for (const vk::raii::PhysicalDevice& device : physicalDevices) {
+        for (const vk::raii::PhysicalDevice& device : devices) {
             bool vulkan14Support, featuresSupport, swapchainSupport, graphicsQueueSupport;
 
             // Vulkan 1.4 support
@@ -122,7 +145,7 @@ namespace backend {
                 vulkan14Support = true;
             }
 
-            // Features support (shaderDrawParameters, dynamic rendering)
+            // Features support
             vk::StructureChain<
                 vk::PhysicalDeviceFeatures2,
                 vk::PhysicalDeviceVulkan11Features,
@@ -135,6 +158,7 @@ namespace backend {
 
             if (
                 supportedFeatures.get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters &&
+                supportedFeatures.get<vk::PhysicalDeviceVulkan13Features>().synchronization2 &&
                 supportedFeatures.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering
             ) {
                 featuresSupport = true;
@@ -157,10 +181,10 @@ namespace backend {
             for (const vk::QueueFamilyProperties& queueFamily : queueFamilies) {
                 if (
                     queueFamily.queueFlags & vk::QueueFlagBits::eGraphics &&
-                    device.getSurfaceSupportKHR(i, *mSurface) // ¿Surface present support?
+                    device.getSurfaceSupportKHR(i, *surface) // ¿Surface present support?
                 ) {
                     graphicsQueueSupport = true;
-                    mGraphicsFamily = i;
+                    graphicsFamily = i;
                 }
 
                 i++;
@@ -168,43 +192,50 @@ namespace backend {
 
             // ¿Support?
             if (vulkan14Support && featuresSupport && swapchainSupport && graphicsQueueSupport) {
-                mPhysicalDevice = device;
+                handle = device;
                 spdlog::info("Physical device selected successfully");
                 break;
             }
         }
 
         // ¿Failed?
-        if (mPhysicalDevice == nullptr) {
+        if (handle == nullptr) {
             spdlog::error("Failed to select physical device");
-            return false;
+            return nullptr;
         }
 
-        // Device queue
+        return handle;
+    }
+
+    vk::raii::Device Context::initializeDevice(const vk::raii::PhysicalDevice& physicalDevice, vk::raii::Queue& queue, uint32_t queueFamily) {
+        // Queue
         float queuePriority = 0.5f;
 
         vk::DeviceQueueCreateInfo deviceQueueInfo{
-            .queueFamilyIndex = mGraphicsFamily,
+            .queueFamilyIndex = queueFamily,
             .queueCount = 1,
             .pQueuePriorities = &queuePriority
         };
 
-        // Device features (shaderDrawParameters, dynamic rendering)
+        // Features
         vk::StructureChain<
             vk::PhysicalDeviceFeatures2,
             vk::PhysicalDeviceVulkan11Features,
             vk::PhysicalDeviceVulkan13Features
-        > deviceFeatures = {
+        > deviceFeatures{
             {},
             { .shaderDrawParameters = true },
-            { .dynamicRendering = true },
+            {
+                .synchronization2 = true,
+                .dynamicRendering = true
+            }
         };
 
-        // Device extensions
+        // Extensions
         std::vector<const char*> deviceExtensions{ vk::KHRSwapchainExtensionName };
 
-        // Device info
-        vk::DeviceCreateInfo deviceInfo{
+        // Info
+        vk::DeviceCreateInfo createInfo{
             .pNext = &deviceFeatures.get<vk::PhysicalDeviceFeatures2>(),
             .queueCreateInfoCount = 1,
             .pQueueCreateInfos = &deviceQueueInfo,
@@ -212,21 +243,75 @@ namespace backend {
             .ppEnabledExtensionNames = deviceExtensions.data()
         };
 
+        vk::raii::Device handle = nullptr;
+
         try {
             // Create device
-            mDevice = vk::raii::Device(mPhysicalDevice, deviceInfo);
+            handle = vk::raii::Device(physicalDevice, createInfo);
             spdlog::info("Device created successfully");
 
-            // Retrieve graphics queue
-            mGraphicsQueue = vk::raii::Queue(mDevice, mGraphicsFamily, 0);
-            spdlog::info("Retrieved graphics queue successfully");
+            // Retrieve queue
+            queue = vk::raii::Queue(handle, queueFamily, 0);
+            spdlog::info("Retrieved queue successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create device: {}", error.what());
-            return false;
+            return nullptr;
         }
 
-        return true;
+        return handle;
+    }
+
+    vk::raii::Fence Context::initializeFence(const vk::raii::Device& device) {
+        // Info
+        vk::FenceCreateInfo createInfo{
+            .flags = vk::FenceCreateFlags::BitsType::eSignaled
+        };
+
+        vk::raii::Fence handle = nullptr;
+
+        try {
+            // Create fence
+            handle = vk::raii::Fence(device, createInfo);
+            spdlog::info("Fence created successfully");
+        }
+        catch (const vk::SystemError& error) {
+            // Failed
+            spdlog::error("Failed to create fence: {}", error.what());
+            return nullptr;
+        }
+
+        return handle;
+    }
+
+    vk::raii::Semaphore Context::initializeSemaphore(const vk::raii::Device& device) {
+        // Info
+        vk::SemaphoreCreateInfo info{};
+
+        vk::raii::Semaphore handle = nullptr;
+
+        try {
+            // Create semaphore
+            handle = vk::raii::Semaphore(device, info);
+            spdlog::info("Semaphore created successfully");
+        }
+        catch (const vk::SystemError& error) {
+            // Failed
+            spdlog::error("Failed to create semaphore: {}", error.what());
+            return nullptr;
+        }
+
+        return handle;
+    }
+
+    VKAPI_ATTR vk::Bool32 VKAPI_CALL Context::debugCallback(
+        vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
+        vk::DebugUtilsMessageTypeFlagsEXT type,
+        const vk::DebugUtilsMessengerCallbackDataEXT* callbackData,
+        void* userData
+    ) {
+        spdlog::error("Validation error:\n{}", callbackData->pMessage);
+        return vk::False;
     }
 }

@@ -6,7 +6,7 @@
 
 namespace backend {
     bool Pipeline::initialize(const Context& context, PipelineType type, const std::vector<std::string>& files) {
-        pContext = &context;
+        sContext = &context;
 
         // Shaders
         mShaders = initializeShaders(files);
@@ -21,7 +21,7 @@ namespace backend {
         // Handle
         switch (type) {
             case PipelineType::GRAPHICS: {
-                mHandle = initializeGraphicsPipeline();
+                mHandle = initializeGraphicsPipeline(mShaders, mLayout);
                 break;
             }
             case PipelineType::COMPUTE: {
@@ -66,7 +66,7 @@ namespace backend {
 
             try {
                 // Create shader
-                shader = vk::raii::ShaderModule(pContext->getDevice(), createInfo);
+                shader = vk::raii::ShaderModule(sContext->getDevice(), createInfo);
                 spdlog::info("Shader created successfully: {}", file);
             }
             catch (const vk::SystemError& error) {
@@ -77,6 +77,7 @@ namespace backend {
 
             shaders.push_back(std::move(shader));
         }
+
         return shaders;
     }
 
@@ -90,7 +91,7 @@ namespace backend {
 
         try {
             // Create layout
-            handle = vk::raii::PipelineLayout(pContext->getDevice(), layoutInfo);
+            handle = vk::raii::PipelineLayout(sContext->getDevice(), layoutInfo);
             spdlog::info("Pipeline layout created successfully");
         }
         catch (const vk::SystemError& error) {
@@ -102,18 +103,27 @@ namespace backend {
         return handle;
     }
 
-    vk::raii::Pipeline Pipeline::initializeGraphicsPipeline() {
+    vk::raii::Pipeline Pipeline::initializeGraphicsPipeline(const std::vector<vk::raii::ShaderModule>& shaders, const vk::raii::PipelineLayout& layout) {
         // Stage infos
         std::vector<vk::PipelineShaderStageCreateInfo> stages;
 
         // Vertex stage info
         vk::PipelineShaderStageCreateInfo vertexStage{
             .stage = vk::ShaderStageFlagBits::eVertex,
-            .module = mShaders[0],
+            .module = shaders[0],
             .pName = "vertexMain"
         };
 
         stages.push_back(vertexStage);
+
+        // fragment stage info
+        vk::PipelineShaderStageCreateInfo fragmentStage{
+            .stage = vk::ShaderStageFlagBits::eFragment,
+            .module = shaders[0],
+            .pName = "fragmentMain"
+        };
+
+        stages.push_back(fragmentStage);
 
         // Dynamic states
         std::vector<vk::DynamicState> dynamicStates{
@@ -193,7 +203,7 @@ namespace backend {
             .pMultisampleState = &multisampleInfo,
             .pColorBlendState = &colorBlendInfo,
             .pDynamicState = &dynamicInfo,
-            .layout = mLayout
+            .layout = layout
         };
 
         // Chain
@@ -209,7 +219,7 @@ namespace backend {
 
         try {
             // Create pipeline
-            handle = vk::raii::Pipeline(pContext->getDevice(), nullptr, createChain.get<vk::GraphicsPipelineCreateInfo>());
+            handle = vk::raii::Pipeline(sContext->getDevice(), nullptr, createChain.get<vk::GraphicsPipelineCreateInfo>());
             spdlog::info("Pipeline created successfully");
         }
         catch (const vk::SystemError& error) {

@@ -5,10 +5,9 @@
 
 namespace gui {
     class Window {
-    private:
         GLFWwindow* mHandle = nullptr;
-        int mWidth = 800;
-        int mHeight = 600;
+        int mWidth = 1366;
+        int mHeight = 768;
     public:
         bool initialize();
         void cleanup();
@@ -16,6 +15,7 @@ namespace gui {
         bool isOpen();
         bool isMinimized();
 
+        // Getters
         GLFWwindow* getHandle() const { return mHandle; }
         int getWidth() const { return mWidth; }
         int getHeight() const { return mHeight; }

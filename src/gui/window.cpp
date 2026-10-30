@@ -9,10 +9,9 @@ namespace gui {
     bool Window::initialize() {
         // Hints
         glfwWindowHint(GLFW_CLIENT_API, false); // Vulkan
-        glfwWindowHint(GLFW_RESIZABLE, false); // No resizable
 
         // Create window
-        mHandle = glfwCreateWindow(mWidth, mHeight, "GDRE", nullptr, nullptr);
+        mHandle = glfwCreateWindow(mWidth, mHeight, "GDRE", glfwGetPrimaryMonitor(), nullptr);
 
         if (!mHandle) {
             // Failed

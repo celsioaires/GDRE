@@ -15,9 +15,12 @@ namespace backend {
     class Backend {
         Context mContext;
         Swapchain mSwapchain;
-        Pipeline mGraphicsPipeline;
+        Pipeline mDefaultPipeline;
         Command mCommand;
     public:
         bool initialize(BackendInfo info);
+        void cleanup();
+
+        void test();
     };
 }

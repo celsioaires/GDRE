@@ -22,6 +22,7 @@ namespace src {
     }
 
     void Engine::cleanup() {
+        mRenderer.cleanup();
         mGui.cleanup();
         mWindow.cleanup();
         mPlatform.cleanup();
@@ -34,6 +35,8 @@ namespace src {
             if (mWindow.isMinimized()) {
                 continue;
             }
+
+            mRenderer.test();
         }
     }
 }

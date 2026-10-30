@@ -14,4 +14,12 @@ namespace render {
 
         return true;
     }
+
+    void Renderer::cleanup() {
+        mBackend.cleanup();
+    }
+
+    void Renderer::test() {
+        mBackend.test();
+    }
 }
