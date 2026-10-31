@@ -16,7 +16,7 @@ namespace backend {
         // Getters
         const vk::raii::CommandBuffer& getBuffer() const { return mBuffer; }
     private:
-        inline static const Context* sContext = nullptr; // const Context& context
+        static inline const Context* pContext = nullptr; // const Context& context
 
         // Initializers
         static vk::raii::CommandPool initializePool(uint32_t queueFamily);

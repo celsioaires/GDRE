@@ -18,7 +18,7 @@ namespace backend {
         // Pipelines
         if (
             // Graphics
-            !mDefaultPipeline.initialize(mContext, vk::PipelineBindPoint::eGraphics, { "default.spv" })
+            !mDefaultPipeline.initialize(mContext, vk::PipelineBindPoint::eGraphics, { "compiled/default.spv" })
             // Compute
         ) {
             return false;

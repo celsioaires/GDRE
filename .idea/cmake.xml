@@ -5,7 +5,7 @@
       <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" GENERATION_OPTIONS="-G Ninja -DENABLE_CPP20_MODULE=OFF">
         <ADDITIONAL_GENERATION_ENVIRONMENT>
           <envs>
-            <env name="VULKAN_SDK" value="$USER_HOME$/Documentos/vulkansdk-linux-x86_64-1.4.363.0/1.4.363.0/x86_64" />
+            <env name="VULKAN_SDK" value="$USER_HOME$/Descargas/vulkansdk-linux-x86_64-1.4.363.0/1.4.363.0/x86_64" />
           </envs>
         </ADDITIONAL_GENERATION_ENVIRONMENT>
       </configuration>

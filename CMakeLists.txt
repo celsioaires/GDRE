@@ -6,7 +6,7 @@ project(GDRE)
 
 set(CMAKE_CXX_STANDARD 20)
 
-# Vulkan
+# Find vulkan
 set(Vulkan_INCLUDE_DIR "$ENV{VULKAN_SDK}/include")
 set(Vulkan_LIBRARY "$ENV{VULKAN_SDK}/lib/VulkanLoader/lib/libvulkan.so")
 
@@ -39,10 +39,19 @@ if (ENABLE_CPP20_MODULE)
     target_link_libraries(VulkanCppModule PUBLIC Vulkan::Vulkan)
 endif()
 
-# Libraries
+# spdlog
 add_subdirectory(libs/spdlog)
+
+# GLFW
+set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "GLFW_BUILD_WAYLAND OFF" FORCE)
+set(GLFW_BUILD_X11 ON CACHE BOOL "GLFW_BUILD_X11" FORCE)
+
 add_subdirectory(libs/glfw)
+
+# GLM
 add_subdirectory(libs/glm)
+
+# fastgltf
 add_subdirectory(libs/fastgltf)
 
 # GDRE executable
@@ -70,7 +79,10 @@ add_executable(GDRE
     src/engine/render/renderer.cpp)
 
 # Defines
-target_compile_definitions(GDRE PRIVATE VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1)
+target_compile_definitions(GDRE PRIVATE
+    VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1
+    GDRE_SHADERS_DIRECTORY="${CMAKE_SOURCE_DIR}/shaders/"
+    GDRE_ASSETS_DIRECTORY="${CMAKE_SOURCE_DIR}/assets/")
 
 if (ENABLE_CPP20_MODULE)
     target_compile_definitions(GDRE PRIVATE USE_CPP20_MODULES)

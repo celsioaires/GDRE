@@ -8,7 +8,7 @@ namespace backend {
     public:
         bool initialize(const Context& context);
     private:
-        inline static const Context* sContext = nullptr; // const Context& context
+        static inline const Context* pContext = nullptr; // const Context& context
 
         // Initializers
         vk::raii::Buffer initializeBuffer();

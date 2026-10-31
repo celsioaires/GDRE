@@ -15,7 +15,8 @@ namespace backend {
         const vk::raii::Pipeline& getHandle() const { return mHandle; }
         vk::PipelineBindPoint getBindPoint() const { return mBindPoint; }
     private:
-        inline static const Context* sContext = nullptr; // const Context& context
+        static inline const Context* pContext = nullptr; // const Context& context
+        static inline const std::string C_SHADERS_DIRECTORY = GDRE_SHADERS_DIRECTORY;
 
         // Initializers
         static std::vector<vk::raii::ShaderModule> initializeShaders(const std::vector<std::string>& files);

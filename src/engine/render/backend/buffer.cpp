@@ -4,7 +4,7 @@
 
 namespace backend {
     bool Buffer::initialize(const Context &context) {
-        sContext = &context;
+        pContext = &context;
 
         // Handle
         mHandle = initializeBuffer();
@@ -12,6 +12,8 @@ namespace backend {
         if (mHandle == nullptr) {
             return false;
         }
+
+        return true;
     }
 
     vk::raii::Buffer Buffer::initializeBuffer() {
@@ -24,7 +26,7 @@ namespace backend {
 
         try {
             // Create buffer
-            handle = vk::raii::Buffer(sContext->getDevice(), info);
+            handle = vk::raii::Buffer(pContext->getDevice(), info);
             spdlog::info("Buffer created successfully");
         }
         catch (const vk::SystemError& error) {

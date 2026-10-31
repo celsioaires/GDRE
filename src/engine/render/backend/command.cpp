@@ -4,7 +4,7 @@
 
 namespace backend {
     bool Command::initialize(const Context& context, uint32_t queueFamily) {
-        sContext = &context;
+        pContext = &context;
 
         // Pool
         mPool = initializePool(queueFamily);
@@ -84,7 +84,7 @@ namespace backend {
 
         try {
             // Create pool
-            handle = vk::raii::CommandPool(sContext->getDevice(), createInfo);
+            handle = vk::raii::CommandPool(pContext->getDevice(), createInfo);
             spdlog::info("Command pool created successfully");
         }
         catch (const vk::SystemError& error) {
@@ -107,7 +107,7 @@ namespace backend {
 
         try {
             // Allocate buffer
-            handle = std::move(vk::raii::CommandBuffers(sContext->getDevice(), allocateInfo).front());
+            handle = std::move(vk::raii::CommandBuffers(pContext->getDevice(), allocateInfo).front());
             spdlog::info("Command buffer allocated successfully");
         }
         catch (const vk::SystemError& error) {

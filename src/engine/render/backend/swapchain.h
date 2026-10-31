@@ -17,8 +17,8 @@ namespace backend {
         const std::vector<vk::Image>& getImages() const { return mImages; }
         const std::vector<vk::raii::ImageView>& getViews() const { return mViews; }
     private:
-        inline static const Context* sContext = nullptr; // const Context& context
-        inline static const vk::Format sFormat = vk::Format::eB8G8R8A8Srgb;
+        static inline const Context* pContext = nullptr; // const Context& context
+        static inline const vk::Format C_IMAGE_FORMAT = vk::Format::eB8G8R8A8Srgb;
 
         // Initializers
         static vk::raii::SwapchainKHR initializeSwapchain(const vk::Extent2D& extent);

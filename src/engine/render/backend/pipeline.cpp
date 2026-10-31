@@ -6,7 +6,7 @@
 
 namespace backend {
     bool Pipeline::initialize(const Context& context, vk::PipelineBindPoint bindPoint, const std::vector<std::string>& files) {
-        sContext = &context;
+        pContext = &context;
         mBindPoint = bindPoint;
 
         // Shaders
@@ -43,7 +43,7 @@ namespace backend {
 
         for (const std::string& file : files) {
             // Open stream
-            std::ifstream stream("shaders/compiled/" + file, std::ios::ate | std::ios::binary);
+            std::ifstream stream(C_SHADERS_DIRECTORY + file, std::ios::ate | std::ios::binary);
 
             if (!stream.is_open()) {
                 // Failed
@@ -67,7 +67,7 @@ namespace backend {
 
             try {
                 // Create shader
-                shader = vk::raii::ShaderModule(sContext->getDevice(), createInfo);
+                shader = vk::raii::ShaderModule(pContext->getDevice(), createInfo);
                 spdlog::info("Shader created successfully: {}", file);
             }
             catch (const vk::SystemError& error) {
@@ -92,7 +92,7 @@ namespace backend {
 
         try {
             // Create layout
-            handle = vk::raii::PipelineLayout(sContext->getDevice(), layoutInfo);
+            handle = vk::raii::PipelineLayout(pContext->getDevice(), layoutInfo);
             spdlog::info("Pipeline layout created successfully");
         }
         catch (const vk::SystemError& error) {
@@ -220,7 +220,7 @@ namespace backend {
 
         try {
             // Create pipeline
-            handle = vk::raii::Pipeline(sContext->getDevice(), nullptr, createChain.get<vk::GraphicsPipelineCreateInfo>());
+            handle = vk::raii::Pipeline(pContext->getDevice(), nullptr, createChain.get<vk::GraphicsPipelineCreateInfo>());
             spdlog::info("Pipeline created successfully");
         }
         catch (const vk::SystemError& error) {

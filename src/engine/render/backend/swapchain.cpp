@@ -4,7 +4,7 @@
 
 namespace backend {
     bool Swapchain::initialize(const Context& context, uint32_t width, uint32_t height) {
-        sContext = &context;
+        pContext = &context;
 
         // Extent
         mExtent = vk::Extent2D{
@@ -30,13 +30,13 @@ namespace backend {
 
     vk::raii::SwapchainKHR Swapchain::initializeSwapchain(const vk::Extent2D& extent) {
         // Surface
-        const vk::raii::SurfaceKHR& surface = sContext->getSurface();
+        const vk::raii::SurfaceKHR& surface = pContext->getSurface();
 
         // Info
         const vk::SwapchainCreateInfoKHR createInfo{
             .surface = *surface,
             .minImageCount = 3,
-            .imageFormat = sFormat,
+            .imageFormat = C_IMAGE_FORMAT,
             .imageExtent = extent,
             .imageArrayLayers = 1,
             .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
@@ -47,7 +47,7 @@ namespace backend {
 
         try {
             // Create swapchain
-            handle = vk::raii::SwapchainKHR(sContext->getDevice(), createInfo);
+            handle = vk::raii::SwapchainKHR(pContext->getDevice(), createInfo);
             spdlog::info("Swapchain created successfully");
 
         }
@@ -87,7 +87,7 @@ namespace backend {
         // Info
         vk::ImageViewCreateInfo info{
             .viewType = vk::ImageViewType::e2D,
-            .format = sFormat,
+            .format = C_IMAGE_FORMAT,
             .subresourceRange = subresource
         };
 
@@ -100,7 +100,7 @@ namespace backend {
 
             try {
                 // Create view
-                view = vk::raii::ImageView(sContext->getDevice(), info);
+                view = vk::raii::ImageView(pContext->getDevice(), info);
                 spdlog::info("View created successfully");
             }
             catch (const vk::SystemError& error) {
