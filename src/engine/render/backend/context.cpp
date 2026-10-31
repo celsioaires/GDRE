@@ -6,18 +6,20 @@
 
 namespace backend {
     bool Context::initialize(GLFWwindow* window) {
-        mInstance = initializeInstance(mHandle);
-
+        if (
+            (mInstance = initializeInstance(mHandle)) == nullptr ||
 #if !defined (NDEBUG)
-        mDebugMessenger = initializeDebugMessenger(mInstance);
+            (mDebugMessenger = initializeDebugMessenger(mInstance)) == nullptr ||
 #endif
-
-        mSurface = initializeSurface(mInstance, window);
-        mPhysicalDevice = initializePhysicalDevice(mInstance, mSurface, mGraphicsFamily);
-        mDevice = initializeDevice(mPhysicalDevice, mGraphicsQueue, mGraphicsFamily);
-        mSubmitFence = initializeFence(mDevice);
-        mAcquireSemaphore = initializeSemaphore(mDevice);
-        mSubmitSemaphore = initializeSemaphore(mDevice);
+            (mSurface = initializeSurface(mInstance, window)) == nullptr ||
+            (mPhysicalDevice = initializePhysicalDevice(mInstance, mSurface, mGraphicsFamily)) == nullptr ||
+            (mDevice = initializeDevice(mPhysicalDevice, mGraphicsQueue, mGraphicsFamily)) == nullptr ||
+            (mSubmitFence = initializeFence(mDevice)) == nullptr ||
+            (mAcquireSemaphore = initializeSemaphore(mDevice)) == nullptr ||
+            (mSubmitSemaphore = initializeSemaphore(mDevice)) == nullptr
+        ) {
+            return false;
+        }
 
         return true;
     }
@@ -50,14 +52,6 @@ namespace backend {
         std::vector<const char*> layers;
 
 #if !defined (NDEBUG)
-        const std::filesystem::path layerPath = std::filesystem::path(
-            std::getenv("HOME")
-        ) / "Descargas/vulkansdk-linux-x86_64-1.4.363.0/1.4.363.0/x86_64/share/vulkan/explicit_layer.d";
-
-        if (std::filesystem::exists(layerPath)) {
-            setenv("VK_LAYER_PATH", layerPath.c_str(), 1);
-        }
-
         layers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
 

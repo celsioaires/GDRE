@@ -6,10 +6,7 @@ project(GDRE)
 
 set(CMAKE_CXX_STANDARD 20)
 
-# Find vulkan
-set(Vulkan_INCLUDE_DIR "$ENV{VULKAN_SDK}/include")
-set(Vulkan_LIBRARY "$ENV{VULKAN_SDK}/lib/VulkanLoader/lib/libvulkan.so")
-
+# Vulkan
 find_package(Vulkan REQUIRED)
 
 # Vulkan Cpp module
