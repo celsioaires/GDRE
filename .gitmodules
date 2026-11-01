@@ -1,15 +1,15 @@
-[submodule "libs/spdlog"]
-	path = libs/spdlog
+[submodule "external/spdlog"]
+	path = external/spdlog
 	url = https://github.com/gabime/spdlog.git
-[submodule "libs/glfw"]
-	path = libs/glfw
+[submodule "external/glfw"]
+	path = external/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "libs/glm"]
-	path = libs/glm
+[submodule "external/glm"]
+	path = external/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "libs/fastgltf"]
-	path = libs/fastgltf
+[submodule "external/fastgltf"]
+	path = external/fastgltf
 	url = https://github.com/spnda/fastgltf.git
-[submodule "libs/imgui"]
-	path = libs/imgui
+[submodule "external/imgui"]
+	path = external/imgui
 	url = https://github.com/ocornut/imgui.git

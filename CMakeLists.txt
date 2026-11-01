@@ -37,43 +37,43 @@ if (ENABLE_CPP20_MODULE)
 endif()
 
 # spdlog
-add_subdirectory(libs/spdlog)
+add_subdirectory(external/spdlog)
 
 # GLFW
 set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "GLFW_BUILD_WAYLAND OFF" FORCE)
 set(GLFW_BUILD_X11 ON CACHE BOOL "GLFW_BUILD_X11" FORCE)
 
-add_subdirectory(libs/glfw)
+add_subdirectory(external/glfw)
 
 # GLM
-add_subdirectory(libs/glm)
+add_subdirectory(external/glm)
 
 # fastgltf
-add_subdirectory(libs/fastgltf)
+add_subdirectory(external/fastgltf)
 
 # GDRE executable
 add_executable(GDRE
     # src
-    src/application.cpp
-    src/main.cpp
+    source/application.cpp
+    source/main.cpp
     # engine
-    src/engine/engine.cpp
+    source/engine/engine.cpp
     # engine core
-    src/engine/core/platform.cpp
-    src/engine/core/time.cpp
+    source/engine/core/platform.cpp
+    source/engine/core/time.cpp
     # engine gui
-    src/engine/gui/gui.cpp
-    src/engine/gui/window.cpp
+    source/engine/gui/gui.cpp
+    source/engine/gui/window.cpp
     # engine load
-    src/engine/load/loader.cpp
+    source/engine/load/loader.cpp
     # engine render
-    src/engine/render/backend/backend.cpp
-    src/engine/render/backend/buffer.cpp
-    src/engine/render/backend/command.cpp
-    src/engine/render/backend/context.cpp
-    src/engine/render/backend/pipeline.cpp
-    src/engine/render/backend/swapchain.cpp
-    src/engine/render/renderer.cpp)
+    source/engine/render/backend/backend.cpp
+    source/engine/render/backend/buffer.cpp
+    source/engine/render/backend/command.cpp
+    source/engine/render/backend/context.cpp
+    source/engine/render/backend/pipeline.cpp
+    source/engine/render/backend/swapchain.cpp
+    source/engine/render/renderer.cpp)
 
 # Defines
 target_compile_definitions(GDRE PRIVATE
@@ -87,13 +87,12 @@ endif()
 
 # ImGui sources
 target_sources(GDRE PRIVATE
-    libs/imgui/imgui.cpp
-    libs/imgui/imgui_draw.cpp
-    libs/imgui/imgui_tables.cpp
-    libs/imgui/imgui_widgets.cpp)
+    external/imgui/imgui.cpp
+    external/imgui/imgui_draw.cpp
+    external/imgui/imgui_tables.cpp
+    external/imgui/imgui_widgets.cpp)
 
-target_include_directories(GDRE PRIVATE
-    libs/imgui)
+target_include_directories(GDRE PRIVATE external/imgui)
 
 # GDRE executable links
 target_link_libraries(GDRE PRIVATE
