@@ -11,6 +11,12 @@ namespace render {
         bool initialize(const gui::Window& window);
         void cleanup();
 
+        void beginDraw();
+        void endDraw();
+
         void drawMesh();
+
+        // Getters
+        const backend::Backend& getBackend() const { return mBackend; };
     };
 }

@@ -1,33 +1,38 @@
-struct Vertex {
+struct VertexOutput {
+    float4 position : SV_Position;
     float3 color;
-    float4 svPosition : SV_Position;
 };
 
-static float2 positions[3] = float2[](
-    float2(0.0, -0.5),
-    float2(0.5, 0.5),
-    float2(-0.5, 0.5)
-);
+struct Vertex {
+    float2 position;
+    float2 padding;
+    float3 color;
+};
 
-static float3 colors[3] = float3[](
-    float3(1, 0, 0),
-    float3(0, 1, 0),
-    float3(0, 0, 1)
-);
+struct Constants {
+    Vertex* vertexBuffer;
+    float2 padding;
+    float4x4 transformMatrix;
+};
+
+[[vk::push_constant]]
+Constants constants;
 
 [shader("vertex")]
 
-Vertex vertexMain(uint id : SV_VertexID) {
-    Vertex vertex;
+VertexOutput vertexMain(uint id : SV_VertexID) {
+    Vertex vertex = constants.vertexBuffer[id];
 
-    vertex.svPosition = float4(positions[id], 0, 1);
-    vertex.color = colors[id];
+    VertexOutput output;
 
-    return vertex;
+    output.position = mul(constants.transformMatrix, float4(vertex.position, 0, 1));
+    output.color = vertex.color;
+
+    return output;
 }
 
 [shader("fragment")]
 
-float4 fragmentMain(Vertex vertex) : SV_Target {
+float4 fragmentMain(VertexOutput vertex) : SV_Target {
     return float4(vertex.color, 1);
 }

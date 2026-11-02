@@ -4,16 +4,10 @@ namespace engine {
     bool Engine::initialize() {
         if (
             !mPlatform.initialize() ||
-            !mWindow.initialize()
-        ) {
-            return false;
-        }
-
-        mGui.initialize();
-
-        if (
-            !mLoader.load() ||
-            !mRenderer.initialize(mWindow)
+            !mWindow.initialize() ||
+            !mRenderer.initialize(mWindow) ||
+            !mGui.initialize(mRenderer) ||
+            !mLoader.load()
         ) {
             return false;
         }
@@ -36,7 +30,14 @@ namespace engine {
                 continue;
             }
 
+            mGui.drawPanels();
+
+            mRenderer.beginDraw();
+
             mRenderer.drawMesh();
+            mGui.renderPanels();
+
+            mRenderer.endDraw();
         }
     }
 }

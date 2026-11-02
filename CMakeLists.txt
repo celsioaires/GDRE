@@ -51,7 +51,7 @@ add_subdirectory(external/glm)
 # fastgltf
 add_subdirectory(external/fastgltf)
 
-# GDRE executable
+# GDRE sources
 add_executable(GDRE
     # src
     source/application.cpp
@@ -77,16 +77,20 @@ add_executable(GDRE
 
 # Defines
 target_compile_definitions(GDRE PRIVATE
+    GLFW_INCLUDE_NONE
     VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1
     GDRE_SHADERS_DIRECTORY="${CMAKE_SOURCE_DIR}/shaders/"
     GDRE_ASSETS_DIRECTORY="${CMAKE_SOURCE_DIR}/assets/")
 
+# Enable cpp module
 if (ENABLE_CPP20_MODULE)
     target_compile_definitions(GDRE PRIVATE USE_CPP20_MODULES)
 endif()
 
-# ImGui sources
+# GDRE ImGui sources
 target_sources(GDRE PRIVATE
+    external/imgui/backends/imgui_impl_glfw.cpp
+    external/imgui/backends/imgui_impl_vulkan.cpp
     external/imgui/imgui.cpp
     external/imgui/imgui_draw.cpp
     external/imgui/imgui_tables.cpp
@@ -94,14 +98,14 @@ target_sources(GDRE PRIVATE
 
 target_include_directories(GDRE PRIVATE external/imgui)
 
-# GDRE executable links
+# GDRE library links
 target_link_libraries(GDRE PRIVATE
     spdlog::spdlog
     glfw
     glm::glm
     fastgltf::fastgltf)
 
-# GDRE Cpp module
+# GDRE cpp module
 if (ENABLE_CPP20_MODULE)
     target_link_libraries(GDRE PRIVATE Vulkan::cppm)
 else()

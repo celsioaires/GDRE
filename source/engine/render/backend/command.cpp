@@ -4,7 +4,7 @@
 
 namespace backend {
     bool Command::initialize(const Context& context, uint32_t queueFamily) {
-        pContext = &context;
+        sContext = &context;
 
         // Pool
         mPool = initializePool(queueFamily);
@@ -23,7 +23,7 @@ namespace backend {
         return true;
     }
 
-    void Command::pipelineBarrier(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {
+    void Command::pipelineBarrier(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const {
         // Subresource
         const vk::ImageSubresourceRange subresource{
             .aspectMask = vk::ImageAspectFlagBits::eColor,
@@ -50,7 +50,29 @@ namespace backend {
         mBuffer.pipelineBarrier2(info);
     }
 
-    void Command::beginRendering(vk::Extent2D extent, const std::vector<vk::RenderingAttachmentInfo>& attachments) {
+    void Command::beginRendering(vk::Extent2D extent, vk::AttachmentLoadOp loadOp, const vk::raii::ImageView& colorView, const vk::raii::ImageView& depthView) const {
+        std::vector<vk::RenderingAttachmentInfo> attachments;
+
+        // Color attachment
+        const vk::RenderingAttachmentInfo colorAttachment{
+            .imageView = *colorView,
+            .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+            .loadOp = loadOp
+        };
+
+        attachments.push_back(colorAttachment);
+
+        // Depth attachment
+        if (depthView != nullptr) {
+            const vk::RenderingAttachmentInfo depthAttachment{
+                .imageView = *depthView,
+                .imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+                .loadOp = loadOp
+            };
+
+            attachments.push_back(depthAttachment);
+        }
+
         // Info
         const vk::RenderingInfo info{
             .renderArea = { .extent = extent },
@@ -62,8 +84,8 @@ namespace backend {
         mBuffer.beginRendering(info);
     }
 
-    void Command::setViewport(vk::Extent2D extent) {
-        // Info
+    void Command::setRenderExtent(vk::Extent2D extent) const {
+        // Viewport
         const vk::Viewport viewport{
             .width = static_cast<float>(extent.width),
             .height = static_cast<float>(extent.height),
@@ -71,6 +93,15 @@ namespace backend {
         };
 
         mBuffer.setViewport(0, viewport);
+
+        // Scissor
+        vk::Rect2D scissor{ .extent = extent };
+
+        mBuffer.setScissor(0, scissor);
+    }
+
+    void Command::pushConstants(const Constants& constants, const vk::raii::PipelineLayout& pipelineLayout) const {
+        mBuffer.pushConstants(*pipelineLayout, constants.stage, 0, sizeof(constants.data), &constants.data);
     }
 
     vk::raii::CommandPool Command::initializePool(uint32_t queueFamily) {
@@ -84,7 +115,7 @@ namespace backend {
 
         try {
             // Create pool
-            handle = vk::raii::CommandPool(pContext->getDevice(), createInfo);
+            handle = vk::raii::CommandPool(sContext->getDevice(), createInfo);
             spdlog::info("Command pool created successfully");
         }
         catch (const vk::SystemError& error) {
@@ -107,7 +138,7 @@ namespace backend {
 
         try {
             // Allocate buffer
-            handle = std::move(vk::raii::CommandBuffers(pContext->getDevice(), allocateInfo).front());
+            handle = std::move(vk::raii::CommandBuffers(sContext->getDevice(), allocateInfo).front());
             spdlog::info("Command buffer allocated successfully");
         }
         catch (const vk::SystemError& error) {

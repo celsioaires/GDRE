@@ -1,11 +1,10 @@
 #pragma once
 
-#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
 namespace gui {
     class Window {
-        GLFWwindow* mHandle = nullptr;
+        GLFWwindow* mHandle;
         int mWidth = 800;
         int mHeight = 600;
     public:
@@ -19,5 +18,11 @@ namespace gui {
         GLFWwindow* getHandle() const { return mHandle; }
         int getWidth() const { return mWidth; }
         int getHeight() const { return mHeight; }
+
+        // Setters
+        void setWidth(const int size) { mWidth = size; }
+        void setHeight(const int size) { mHeight = size; }
+    private:
+        static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
     };
 }

@@ -1,11 +1,23 @@
+#define GLFW_INCLUDE_VULKAN
+#define VMA_IMPLEMENTATION
+
 #include "context.h"
 
 #include <filesystem>
 
 #include <spdlog/spdlog.h>
 
+#include <vulkan/vk_enum_string_helper.h>
+
 namespace backend {
+    Context::~Context() {
+        vmaDestroyAllocator(mAllocator);
+    }
+
     bool Context::initialize(GLFWwindow* window) {
+        mWindow = window;
+
+        // Objects
         if (
             (mInstance = initializeInstance(mHandle)) == nullptr ||
 #if !defined (NDEBUG)
@@ -14,6 +26,7 @@ namespace backend {
             (mSurface = initializeSurface(mInstance, window)) == nullptr ||
             (mPhysicalDevice = initializePhysicalDevice(mInstance, mSurface, mGraphicsFamily)) == nullptr ||
             (mDevice = initializeDevice(mPhysicalDevice, mGraphicsQueue, mGraphicsFamily)) == nullptr ||
+            (mAllocator = initializeAllocator(mDevice, mPhysicalDevice, mInstance)) == nullptr ||
             (mSubmitFence = initializeFence(mDevice)) == nullptr ||
             (mAcquireSemaphore = initializeSemaphore(mDevice)) == nullptr ||
             (mSubmitSemaphore = initializeSemaphore(mDevice)) == nullptr
@@ -24,14 +37,69 @@ namespace backend {
         return true;
     }
 
+    void Context::submitQueue(const vk::raii::CommandBuffer& commandBuffer) const {
+        // Wait stage
+        const vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+
+        // Submit info
+        const vk::SubmitInfo info{
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &*mAcquireSemaphore,
+            .pWaitDstStageMask = &waitStage,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &*commandBuffer,
+            .signalSemaphoreCount = 1,
+            .pSignalSemaphores = &*mSubmitSemaphore
+        };
+
+        // Submit command buffer
+        mGraphicsQueue.submit(info, *mSubmitFence);
+    }
+
+    bool Context::presentQueue(const vk::raii::SwapchainKHR& swapchain, uint32_t imageIndex) const {
+        // Info
+        const vk::PresentInfoKHR info{
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &*mSubmitSemaphore,
+            .swapchainCount = 1,
+            .pSwapchains = &*swapchain,
+            .pImageIndices = &imageIndex
+        };
+
+        vk::Result result = mGraphicsQueue.presentKHR(info);
+
+        if (
+            result == vk::Result::eSuboptimalKHR ||
+            result == vk::Result::eErrorOutOfDateKHR
+        ) {
+            spdlog::error("Failed to present swapchain: {}", string_VkResult(static_cast<VkResult>(result)));
+            return false;
+        }
+
+        return true;
+    }
+
+    void Context::waitIdle() const {
+        try {
+            mDevice.waitIdle();
+        }
+        catch (const vk::SystemError& error) {
+            // Failed
+            spdlog::error("Failed to wait device idle: {}", error.what());
+        }
+    }
+
     vk::raii::Instance Context::initializeInstance(const vk::raii::Context& context) {
         // Application info
+        const char* applicationName = "GDRE";
+        const uint32_t applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+
         const vk::ApplicationInfo applicationInfo{
-            .pApplicationName = "GDRE",
-            .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-            .pEngineName = "GDRE",
-            .engineVersion = VK_MAKE_VERSION(1, 0, 0),
-            .apiVersion = vk::ApiVersion14
+            .pApplicationName = applicationName,
+            .applicationVersion = applicationVersion,
+            .pEngineName = applicationName,
+            .engineVersion = applicationVersion,
+            .apiVersion = cApiVersion
         };
 
         // Extensions
@@ -47,7 +115,6 @@ namespace backend {
 #if !defined (NDEBUG)
         extensions.push_back(vk::EXTDebugUtilsExtensionName);
 #endif
-
         // Layers
         std::vector<const char*> layers;
 
@@ -56,7 +123,7 @@ namespace backend {
 #endif
 
         // Info
-        const vk::InstanceCreateInfo createInfo{
+        const vk::InstanceCreateInfo info{
             .pApplicationInfo = &applicationInfo,
             .enabledLayerCount = static_cast<uint32_t>(layers.size()),
             .ppEnabledLayerNames = layers.data(),
@@ -68,7 +135,7 @@ namespace backend {
 
         try {
             // Create instance
-            handle = vk::raii::Instance(context, createInfo);
+            handle = vk::raii::Instance(context, info);
             spdlog::info("Instance created successfully");
         }
         catch (const vk::SystemError& error) {
@@ -153,15 +220,18 @@ namespace backend {
             const vk::StructureChain<
                 vk::PhysicalDeviceFeatures2,
                 vk::PhysicalDeviceVulkan11Features,
+                vk::PhysicalDeviceVulkan12Features,
                 vk::PhysicalDeviceVulkan13Features
             > supportedFeatures = device.getFeatures2<
                 vk::PhysicalDeviceFeatures2,
                 vk::PhysicalDeviceVulkan11Features,
+                vk::PhysicalDeviceVulkan12Features,
                 vk::PhysicalDeviceVulkan13Features
             >();
 
             if (
                 supportedFeatures.get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters &&
+                supportedFeatures.get<vk::PhysicalDeviceVulkan12Features>().bufferDeviceAddress &&
                 supportedFeatures.get<vk::PhysicalDeviceVulkan13Features>().synchronization2 &&
                 supportedFeatures.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering
             ) {
@@ -215,43 +285,57 @@ namespace backend {
         // Queue
         const float queuePriority = 0.5f;
 
-        const vk::DeviceQueueCreateInfo deviceQueueInfo{
+        const vk::DeviceQueueCreateInfo queueInfo{
             .queueFamilyIndex = queueFamily,
             .queueCount = 1,
             .pQueuePriorities = &queuePriority
         };
 
         // Features
-        const vk::StructureChain<
-            vk::PhysicalDeviceFeatures2,
-            vk::PhysicalDeviceVulkan11Features,
-            vk::PhysicalDeviceVulkan13Features
-        > deviceFeatures{
-            {},
-            { .shaderDrawParameters = true },
-            {
-                .synchronization2 = true,
-                .dynamicRendering = true
-            }
+        const vk::PhysicalDeviceVulkan11Features features11{
+            .shaderDrawParameters = true
+        };
+
+        const vk::PhysicalDeviceVulkan12Features features12{
+            .bufferDeviceAddress = true
+        };
+
+        const vk::PhysicalDeviceVulkan13Features features13{
+            .synchronization2 = true,
+            .dynamicRendering = true
         };
 
         // Extensions
-        const std::vector<const char*> deviceExtensions{ vk::KHRSwapchainExtensionName };
+        const std::vector<const char*> extensions{ vk::KHRSwapchainExtensionName };
 
         // Info
-        vk::DeviceCreateInfo createInfo{
-            .pNext = &deviceFeatures.get<vk::PhysicalDeviceFeatures2>(),
+        vk::DeviceCreateInfo info{
             .queueCreateInfoCount = 1,
-            .pQueueCreateInfos = &deviceQueueInfo,
-            .enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size()),
-            .ppEnabledExtensionNames = deviceExtensions.data()
+            .pQueueCreateInfos = &queueInfo,
+            .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+            .ppEnabledExtensionNames = extensions.data()
+        };
+
+        // Chain
+        vk::StructureChain<
+            vk::DeviceCreateInfo,
+            vk::PhysicalDeviceFeatures2,
+            vk::PhysicalDeviceVulkan11Features,
+            vk::PhysicalDeviceVulkan12Features,
+            vk::PhysicalDeviceVulkan13Features
+        > chain{
+            info,
+            {},
+            features11,
+            features12,
+            features13
         };
 
         vk::raii::Device handle = nullptr;
 
         try {
             // Create device
-            handle = vk::raii::Device(physicalDevice, createInfo);
+            handle = vk::raii::Device(physicalDevice, chain.get<vk::DeviceCreateInfo>());
             spdlog::info("Device created successfully");
 
             // Retrieve queue
@@ -265,6 +349,26 @@ namespace backend {
         }
 
         return handle;
+    }
+
+    VmaAllocator Context::initializeAllocator(const vk::raii::Device& device, const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Instance& instance) {
+        // Info
+        VmaAllocatorCreateInfo info{
+            .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
+            .physicalDevice = *physicalDevice,
+            .device = *device,
+            .instance = *instance
+        };
+
+        // Handle
+        VmaAllocator allocator;
+
+        if (vmaCreateAllocator(&info, &allocator) != VK_SUCCESS) {
+            spdlog::error("Failed to create allocator");
+            return nullptr;
+        }
+
+        return allocator;
     }
 
     vk::raii::Fence Context::initializeFence(const vk::raii::Device& device) {

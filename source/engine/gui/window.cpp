@@ -2,9 +2,6 @@
 
 #include <spdlog/spdlog.h>
 
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-
 namespace gui {
     bool Window::initialize() {
         // Hints
@@ -21,6 +18,10 @@ namespace gui {
 
         spdlog::info("Window created successfully");
 
+        glfwSetWindowUserPointer(mHandle, this);
+
+        glfwSetFramebufferSizeCallback(mHandle, framebufferSizeCallback);
+
         return true;
     }
 
@@ -34,5 +35,14 @@ namespace gui {
 
     bool Window::isMinimized() {
         return glfwGetWindowAttrib(mHandle, GLFW_ICONIFIED);
+    }
+
+    void Window::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+        Window* pWindow = static_cast<Window*>(glfwGetWindowUserPointer(window));
+
+        if (pWindow != nullptr) {
+            pWindow->setWidth(width);
+            pWindow->setHeight(height);
+        }
     }
 }

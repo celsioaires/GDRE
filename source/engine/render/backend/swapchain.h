@@ -8,17 +8,22 @@ namespace backend {
         vk::raii::SwapchainKHR mHandle = nullptr;
         std::vector<vk::Image> mImages;
         std::vector<vk::raii::ImageView> mViews;
+        uint32_t mImageIndex;
     public:
+        static inline const vk::Format cImageFormat = vk::Format::eB8G8R8A8Unorm;
+
         bool initialize(const Context& context, uint32_t width, uint32_t height);
 
+        const vk::Image acquireImage(const vk::raii::Semaphore& signalSemaphore);
+
         // Getters
-        const vk::Extent2D& getExtent() const { return mExtent; }
+        const vk::Extent2D getExtent() const { return mExtent; }
         const vk::raii::SwapchainKHR& getHandle() const { return mHandle; }
-        const std::vector<vk::Image>& getImages() const { return mImages; }
-        const std::vector<vk::raii::ImageView>& getViews() const { return mViews; }
+        const uint32_t getImageIndex() const { return mImageIndex; }
+        const vk::Image& getCurrentImage() const { return mImages[mImageIndex]; }
+        const vk::raii::ImageView& getCurrentView() const { return mViews[mImageIndex]; }
     private:
-        static inline const Context* pContext = nullptr; // const Context& context
-        static inline const vk::Format C_IMAGE_FORMAT = vk::Format::eB8G8R8A8Srgb;
+        static inline const Context* sContext = nullptr; // const Context& context
 
         // Initializers
         static vk::raii::SwapchainKHR initializeSwapchain(const vk::Extent2D& extent);

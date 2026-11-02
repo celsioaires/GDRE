@@ -4,23 +4,34 @@
 #include "swapchain.h"
 #include "pipeline.h"
 #include "command.h"
+#include "buffer.h"
 
 namespace backend {
-    struct Info {
-        GLFWwindow* window = nullptr;
-        uint32_t width = 0;
-        uint32_t height = 0;
+    struct BackendInfo {
+        GLFWwindow* window;
+        uint32_t width;
+        uint32_t height;
     };
 
     class Backend {
         Context mContext;
         Swapchain mSwapchain;
-        Pipeline mDefaultPipeline;
         Command mCommand;
+        Constants mDefaultConstants;
+        Pipeline mDefaultPipeline;
+        Buffer mTriangleBuffer;
     public:
-        bool initialize(Info info);
+        bool initialize(BackendInfo info);
         void cleanup();
 
-        void renderTriangle();
+        void beginRender();
+        void endRender();
+
+        void renderCube();
+
+        // Getters
+        const Context& getContext() const { return mContext; }
+        const Swapchain& getSwapchain() const { return mSwapchain; }
+        const Command& getCommand() const { return mCommand; }
     };
 }
