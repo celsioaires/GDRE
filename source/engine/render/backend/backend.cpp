@@ -4,16 +4,12 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-namespace gui {
-    class Window;
-}
-
 namespace backend {
     bool Backend::initialize(BackendInfo info) {
         // Context, swapchain and command
         if (
             !mContext.initialize(info.window) ||
-            !mSwapchain.initialize(mContext, info.width, info.height) ||
+            !mSwapchain.initialize(mContext) ||
             !mCommand.initialize(mContext, mContext.getGraphicsFamily())
         ) {
             return false;
@@ -79,14 +75,11 @@ namespace backend {
             swapchainImage = mSwapchain.acquireImage(mContext.getAcquireSemaphore());
 
             if (swapchainImage == nullptr) {
+                // Recreate swapchain
                 mContext.waitIdle();
+                mSwapchain.cleanup();
 
-                mSwapchain = Swapchain();
-
-                int width, height;
-                glfwGetWindowSize(mContext.getWindow(), &width, &height);
-
-                if (!mSwapchain.initialize(mContext, width, height)) {
+                if (!mSwapchain.initialize(mContext)) {
                     spdlog::error("Failed to initialize swapchain");
                 }
 
@@ -104,32 +97,28 @@ namespace backend {
             spdlog::error("Failed to begin render: {}", error.what());
         }
 
-        // Swapchain image barrier
+        // Swapchain image barrier (undefined to color)
         mCommand.pipelineBarrier(swapchainImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
     }
 
     void Backend::endRender() {
         const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
 
-        // Swapchain image barrier
+        // Swapchain image barrier (color to present)
         mCommand.pipelineBarrier(mSwapchain.getCurrentImage(), vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR);
 
         try {
             commandBuffer.end();
 
-            // Submit command buffer
             mContext.submitQueue(commandBuffer);
 
             // Present swapchain
             if (!mContext.presentQueue(mSwapchain.getHandle(), mSwapchain.getImageIndex())) {
+                // Recreate swapchain
                 mContext.waitIdle();
+                mSwapchain.cleanup();
 
-                mSwapchain = Swapchain();
-
-                int width, height;
-                glfwGetWindowSize(mContext.getWindow(), &width, &height);
-
-                if (!mSwapchain.initialize(mContext, width, height)) {
+                if (!mSwapchain.initialize(mContext)) {
                     spdlog::error("Failed to initialize swapchain");
                 }
             }

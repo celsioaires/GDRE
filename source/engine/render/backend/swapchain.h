@@ -14,7 +14,8 @@ namespace backend {
     public:
         static inline const vk::Format cImageFormat = vk::Format::eB8G8R8A8Unorm;
 
-        bool initialize(const Context& context, uint32_t width, uint32_t height);
+        bool initialize(const Context& context);
+        void cleanup();
 
         const vk::Image acquireImage(const vk::raii::Semaphore& signalSemaphore);
 

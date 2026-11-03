@@ -10,8 +10,6 @@ namespace backend {
     // Structs
     struct BackendInfo {
         GLFWwindow* window;
-        uint32_t width;
-        uint32_t height;
     };
 
     struct Vertex {

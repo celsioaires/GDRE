@@ -30,14 +30,21 @@ namespace engine {
                 continue;
             }
 
-            mGui.drawPanels();
-
-            mRenderer.beginDraw();
-
-            mRenderer.drawMesh();
-            mGui.renderPanels();
-
-            mRenderer.endDraw();
+            update();
+            draw();
         }
+    }
+
+    void Engine::update() {
+        mGui.prepareWindows();
+    }
+
+    void Engine::draw() {
+        mRenderer.beginDraw();
+
+        mRenderer.drawMesh();
+        mGui.drawWindows();
+
+        mRenderer.endDraw();
     }
 }

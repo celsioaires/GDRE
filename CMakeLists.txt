@@ -62,6 +62,8 @@ add_executable(GDRE
     source/engine/core/time.cpp
     # engine gui
     source/engine/gui/gui.cpp
+    source/engine/gui/hierarchy.cpp
+    source/engine/gui/inspector.cpp
     source/engine/gui/window.cpp
     # engine load
     source/engine/load/loader.cpp

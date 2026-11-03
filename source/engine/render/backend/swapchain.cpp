@@ -5,13 +5,17 @@
 #include <vulkan/vk_enum_string_helper.h>
 
 namespace backend {
-    bool Swapchain::initialize(const Context& context, uint32_t width, uint32_t height) {
+    bool Swapchain::initialize(const Context& context) {
         sContext = &context;
+
+        // Window size
+        int windowWidth, windowHeight;
+        glfwGetWindowSize(sContext->getWindow(), &windowWidth, &windowHeight);
 
         // Extent
         mExtent = vk::Extent2D{
-            .width = width,
-            .height = height
+            .width = static_cast<uint32_t>(windowWidth),
+            .height = static_cast<uint32_t>(windowHeight)
         };
 
         // Handle
@@ -34,6 +38,16 @@ namespace backend {
         spdlog::info("Swapchain views created successfully");
 
         return true;
+    }
+
+    void Swapchain::cleanup() {
+        sContext = nullptr;
+
+        mViews.clear();
+        mHandle = nullptr;
+        mImages.clear();
+        mExtent = vk::Extent2D{};
+        mImageIndex = 0;
     }
 
     const vk::Image Swapchain::acquireImage(const vk::raii::Semaphore& signalSemaphore) {

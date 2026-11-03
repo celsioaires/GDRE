@@ -8,7 +8,7 @@ namespace gui {
         glfwWindowHint(GLFW_CLIENT_API, false); // Vulkan
 
         // Create window
-        mHandle = glfwCreateWindow(mWidth, mHeight, "GDRE", nullptr, nullptr);
+        mHandle = glfwCreateWindow(800, 600, "GDRE", nullptr, nullptr);
 
         if (!mHandle) {
             // Failed
@@ -18,9 +18,8 @@ namespace gui {
 
         spdlog::info("Window created successfully");
 
-        glfwSetWindowUserPointer(mHandle, this);
+        //glfwSetWindowUserPointer(mHandle, this);
 
-        glfwSetFramebufferSizeCallback(mHandle, framebufferSizeCallback);
         glfwSetKeyCallback(mHandle, keyCallback);
 
         return true;
@@ -30,21 +29,12 @@ namespace gui {
         glfwDestroyWindow(mHandle);
     }
 
-    bool Window::isOpen() {
+    bool Window::isOpen() const {
         return !glfwWindowShouldClose(mHandle);
     }
 
-    bool Window::isMinimized() {
+    bool Window::isMinimized() const {
         return glfwGetWindowAttrib(mHandle, GLFW_ICONIFIED);
-    }
-
-    void Window::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
-        Window* pWindow = static_cast<Window*>(glfwGetWindowUserPointer(window));
-
-        if (pWindow != nullptr) {
-            pWindow->setWidth(width);
-            pWindow->setHeight(height);
-        }
     }
 
     void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {

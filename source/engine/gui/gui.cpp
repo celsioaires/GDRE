@@ -3,7 +3,6 @@
 #include <spdlog/spdlog.h>
 
 #include <imgui.h>
-
 #include <backends/imgui_impl_glfw.h>
 #define IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING
 #include <backends/imgui_impl_vulkan.h>
@@ -13,14 +12,14 @@ namespace gui {
         mBackend = &renderer.getBackend();
 
         // Context
-        const backend::Context& context = mBackend->getContext();
-
         IMGUI_CHECKVERSION();
 
         if (ImGui::CreateContext() == nullptr) {
             spdlog::error("Failed to initialize ImGui");
             return false;
         }
+
+        const backend::Context& context = mBackend->getContext();
 
         // GLFW backend
         if (!ImGui_ImplGlfw_InitForVulkan(context.getWindow(), true)) {
@@ -64,18 +63,18 @@ namespace gui {
         ImGui::DestroyContext();
     }
 
-    void Gui::drawPanels() {
+    void Gui::prepareWindows() const {
         const ImGuiIO& io = ImGui::GetIO();
 
-        // Window sizes
-        const float windowWidth = io.DisplaySize.x;
-        const float windowHeight = io.DisplaySize.y;
-        const float sidebarWidth = windowWidth * 0.25f;
-        const float hierarchyHeight = windowHeight * 0.5f;
-        const float inspectorHeight = windowHeight - hierarchyHeight;
+        // Sizes
+        const float width = io.DisplaySize.x;
+        const float height = io.DisplaySize.y;
+        const float sidebarWidth = width * 0.25f;
+        const float hierarchyHeight = height * 0.5f;
+        const float inspectorHeight = height - hierarchyHeight;
 
-        // Window flags
-        const ImGuiWindowFlags windowFlags =
+        // Flags
+        const ImGuiWindowFlags flags =
             ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoResize |
             ImGuiWindowFlags_NoCollapse;
@@ -86,30 +85,28 @@ namespace gui {
 
         ImGui::NewFrame();
 
-        // Next window
+        // Hierarchy
         ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(sidebarWidth, hierarchyHeight));
 
-        // Hierarchy
-        ImGui::Begin("Hierarchy", nullptr, windowFlags);
-        ImGui::End();
+        mHierarchy.draw(flags);
 
-        // Next window
+        // Inspector
         ImGui::SetNextWindowPos(ImVec2(0.0f, hierarchyHeight));
         ImGui::SetNextWindowSize(ImVec2(sidebarWidth, inspectorHeight));
 
-        // Inspector
-        ImGui::Begin("Inspector", nullptr, windowFlags);
-        ImGui::End();
+        mInspector.draw(flags);
 
+        // Render frame
         ImGui::Render();
     }
 
-    void Gui::renderPanels() {
+    void Gui::drawWindows() const {
         const backend::Swapchain& swapchain = mBackend->getSwapchain();
         const backend::Command& command = mBackend->getCommand();
         const vk::raii::CommandBuffer& commandBuffer = command.getBuffer();
 
+        // Render commands
         command.beginRendering(swapchain.getExtent(), vk::AttachmentLoadOp::eLoad, swapchain.getCurrentView());
 
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *commandBuffer);

@@ -18,5 +18,8 @@ namespace engine {
         void cleanup();
 
         void run();
+    private:
+        void update();
+        void draw();
     };
 }

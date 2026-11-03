@@ -95,7 +95,7 @@ namespace backend {
         mBuffer.setViewport(0, viewport);
 
         // Scissor
-        vk::Rect2D scissor{ .extent = extent };
+        const vk::Rect2D scissor{ .extent = extent };
 
         mBuffer.setScissor(0, scissor);
     }
