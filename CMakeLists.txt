@@ -40,8 +40,7 @@ endif()
 add_subdirectory(external/spdlog)
 
 # GLFW
-set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "GLFW_BUILD_WAYLAND OFF" FORCE)
-set(GLFW_BUILD_X11 ON CACHE BOOL "GLFW_BUILD_X11" FORCE)
+set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(external/glfw)
 
@@ -71,6 +70,7 @@ add_executable(GDRE
     source/engine/render/backend/buffer.cpp
     source/engine/render/backend/command.cpp
     source/engine/render/backend/context.cpp
+    source/engine/render/backend/descriptor.cpp
     source/engine/render/backend/pipeline.cpp
     source/engine/render/backend/swapchain.cpp
     source/engine/render/renderer.cpp)
@@ -78,9 +78,16 @@ add_executable(GDRE
 # Defines
 target_compile_definitions(GDRE PRIVATE
     GLFW_INCLUDE_NONE
-    VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1
+    VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
+    VULKAN_HPP_NO_SPACESHIP_OPERATOR
+    VULKAN_HPP_NO_TO_STRING
+    VULKAN_HPP_NO_SETTERS
     GDRE_SHADERS_DIRECTORY="${CMAKE_SOURCE_DIR}/shaders/"
     GDRE_ASSETS_DIRECTORY="${CMAKE_SOURCE_DIR}/assets/")
+
+# PCHs
+target_precompile_headers(GDRE PRIVATE
+)
 
 # Enable cpp module
 if (ENABLE_CPP20_MODULE)

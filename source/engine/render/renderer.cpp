@@ -28,6 +28,6 @@ namespace render {
     }
 
     void Renderer::drawMesh() {
-        mBackend.renderCube();
+        mBackend.renderSquare();
     }
 }

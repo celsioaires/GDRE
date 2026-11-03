@@ -4,9 +4,9 @@ GDRE is a GPU driven rendering engine made in C++ 20 and Vulkan 1.4.
 
 ![GDRE](docs/images/gdre2.png)
 
-## Development dependencies:
+## Build dependencies:
 
-- ### Vulkan SDK tarball
+- ### Vulkan SDK
 
 Download the SDK from https://vulkan.lunarg.com/sdk/home#linux. 
 Then add the following line at the end of your `~/.profile` file:

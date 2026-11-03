@@ -1,10 +1,12 @@
 #pragma once
 
 #include "context.h"
-#include "constants.h"
+#include "utils.h"
 
 namespace backend {
     class Command {
+        static inline const Context* sContext;
+
         vk::raii::CommandPool mPool = nullptr;
         vk::raii::CommandBuffer mBuffer = nullptr;
     public:
@@ -18,8 +20,6 @@ namespace backend {
         // Getters
         const vk::raii::CommandBuffer& getBuffer() const { return mBuffer; }
     private:
-        static inline const Context* sContext = nullptr; // const Context& context
-
         // Initializers
         static vk::raii::CommandPool initializePool(uint32_t queueFamily);
         static vk::raii::CommandBuffer initializeBuffer(const vk::raii::CommandPool& pool);

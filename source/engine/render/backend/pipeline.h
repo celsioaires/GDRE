@@ -1,22 +1,19 @@
 #pragma once
 
 #include "context.h"
-#include "constants.h"
+#include "utils.h"
 #include "swapchain.h"
 
 namespace backend {
-    enum PipelineType {
-        ePipelineTypeGraphics,
-        ePipelineTypeCompute
-    };
-
     class Pipeline {
+        static inline const Context* sContext;
+        static inline const std::string cShadersDirectory = GDRE_SHADERS_DIRECTORY;
+
         std::vector<vk::raii::ShaderModule> mShaders;
         vk::raii::PipelineLayout mLayout = nullptr;
         vk::raii::Pipeline mHandle = nullptr;
         vk::PipelineBindPoint mBindPoint;
     public:
-        // Rendering info
         static inline const vk::PipelineRenderingCreateInfo cRenderingInfo{
             .colorAttachmentCount = 1,
             .pColorAttachmentFormats = &Swapchain::cImageFormat
@@ -29,9 +26,6 @@ namespace backend {
         const vk::raii::Pipeline& getHandle() const { return mHandle; }
         vk::PipelineBindPoint getBindPoint() const { return mBindPoint; }
     private:
-        static inline const Context* sContext = nullptr; // const Context& context
-        static inline const std::string cShadersDirectory = GDRE_SHADERS_DIRECTORY;
-
         // Initializers
         static std::vector<vk::raii::ShaderModule> initializeShaders(const std::vector<std::string>& files);
         static vk::raii::PipelineLayout initializeLayout(vk::PushConstantRange pushConstant);

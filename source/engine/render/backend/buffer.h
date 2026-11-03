@@ -1,16 +1,12 @@
 #pragma once
 
 #include "context.h"
+#include "utils.h"
 
 namespace backend {
-    enum BufferType {
-        eBufferTypeStaging,
-        eBufferTypeVertex,
-        eBufferTypeIndex,
-        eBufferTypeUniform,
-    };
-
     class Buffer {
+        static inline const Context* sContext;
+
         VkBuffer mHandle;
         VmaAllocation mAllocation;
         vk::DeviceSize mSize;
@@ -23,9 +19,6 @@ namespace backend {
         vk::DeviceSize getSize() const { return mSize; }
         vk::DeviceAddress getAddress() const { return mAddress; }
     private:
-        static inline const Context* sContext = nullptr; // const Context& context
-
-        // Initializers
         static VkBuffer initializeBuffer(vk::DeviceSize size, VkBufferUsageFlags usage, VmaAllocation* allocation, VmaMemoryUsage memoryUsage);
     };
 }

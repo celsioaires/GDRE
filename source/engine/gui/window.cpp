@@ -21,6 +21,7 @@ namespace gui {
         glfwSetWindowUserPointer(mHandle, this);
 
         glfwSetFramebufferSizeCallback(mHandle, framebufferSizeCallback);
+        glfwSetKeyCallback(mHandle, keyCallback);
 
         return true;
     }
@@ -43,6 +44,12 @@ namespace gui {
         if (pWindow != nullptr) {
             pWindow->setWidth(width);
             pWindow->setHeight(height);
+        }
+    }
+
+    void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+            glfwSetWindowShouldClose(window, true);
         }
     }
 }

@@ -3,9 +3,8 @@
 
 namespace load {
     class Loader {
+        const std::string cAssetsDirectory = GDRE_ASSETS_DIRECTORY;
     public:
         bool load();
-    private:
-        static inline const std::string C_ASSETS_DIRECTORY = GDRE_ASSETS_DIRECTORY;
     };
 }

@@ -62,6 +62,7 @@ namespace backend {
         static vk::raii::Fence initializeFence(const vk::raii::Device& device);
         static vk::raii::Semaphore initializeSemaphore(const vk::raii::Device& device);
 
+        // Callback
         static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
             vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
             vk::DebugUtilsMessageTypeFlagsEXT type,

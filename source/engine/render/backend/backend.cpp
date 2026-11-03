@@ -4,8 +4,6 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "vertex.h"
-
 namespace gui {
     class Window;
 }
@@ -142,7 +140,7 @@ namespace backend {
         }
     }
 
-    void Backend::renderCube() {
+    void Backend::renderSquare() {
         const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
         const vk::Extent2D swapchainExtent = mSwapchain.getExtent();
 

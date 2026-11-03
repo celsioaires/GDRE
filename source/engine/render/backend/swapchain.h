@@ -4,6 +4,8 @@
 
 namespace backend {
     class Swapchain {
+        static inline const Context* sContext;
+
         vk::Extent2D mExtent;
         vk::raii::SwapchainKHR mHandle = nullptr;
         std::vector<vk::Image> mImages;
@@ -23,8 +25,6 @@ namespace backend {
         const vk::Image& getCurrentImage() const { return mImages[mImageIndex]; }
         const vk::raii::ImageView& getCurrentView() const { return mViews[mImageIndex]; }
     private:
-        static inline const Context* sContext = nullptr; // const Context& context
-
         // Initializers
         static vk::raii::SwapchainKHR initializeSwapchain(const vk::Extent2D& extent);
         static std::vector<vk::Image> initializeImages(const vk::raii::SwapchainKHR& swapchain);

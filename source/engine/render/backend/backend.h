@@ -4,15 +4,10 @@
 #include "swapchain.h"
 #include "pipeline.h"
 #include "command.h"
+#include "utils.h"
 #include "buffer.h"
 
 namespace backend {
-    struct BackendInfo {
-        GLFWwindow* window;
-        uint32_t width;
-        uint32_t height;
-    };
-
     class Backend {
         Context mContext;
         Swapchain mSwapchain;
@@ -27,7 +22,7 @@ namespace backend {
         void beginRender();
         void endRender();
 
-        void renderCube();
+        void renderSquare();
 
         // Getters
         const Context& getContext() const { return mContext; }
