@@ -18,8 +18,6 @@ namespace gui {
 
         spdlog::info("Window created successfully");
 
-        //glfwSetWindowUserPointer(mHandle, this);
-
         glfwSetKeyCallback(mHandle, keyCallback);
 
         return true;

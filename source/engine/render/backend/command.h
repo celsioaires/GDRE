@@ -15,13 +15,12 @@ namespace backend {
         void pipelineBarrier(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const;
         void beginRendering(vk::Extent2D extent, vk::AttachmentLoadOp loadOp, const vk::raii::ImageView& colorView, const vk::raii::ImageView& depthView = nullptr) const;
         void setRenderExtent(vk::Extent2D extent) const;
-        void pushConstants(const Constants& constants, const vk::raii::PipelineLayout& pipelineLayout) const;
 
         // Getters
         const vk::raii::CommandBuffer& getBuffer() const { return mBuffer; }
     private:
         // Initializers
-        static vk::raii::CommandPool initializePool(uint32_t queueFamily);
-        static vk::raii::CommandBuffer initializeBuffer(const vk::raii::CommandPool& pool);
+        static vk::raii::CommandPool initializeCommandPool(uint32_t queueFamily);
+        static vk::raii::CommandBuffer initializeCommandBuffer(const vk::raii::CommandPool& pool);
     };
 }

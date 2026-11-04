@@ -53,13 +53,21 @@ namespace backend {
     const vk::Image Swapchain::acquireImage(const vk::raii::Semaphore& signalSemaphore) {
         vk::ResultValue<uint32_t> resultValue = mHandle.acquireNextImage(UINT64_MAX, *signalSemaphore, nullptr);
 
-        const vk::Result result = resultValue.result;
+        const VkResult result = static_cast<VkResult>(resultValue.result);
 
-        if (result != vk::Result::eSuccess) {
-            spdlog::error("Failed to acquire swapchain image: {}", string_VkResult(static_cast<VkResult>(result)));
-
-            if (result == vk::Result::eErrorOutOfDateKHR) {
-                return nullptr;
+        if (result != VK_SUCCESS) {
+            switch (result) {
+                case VK_SUBOPTIMAL_KHR: {
+                    spdlog::warn("Failed to acquire swapchain image");
+                    break;
+                }
+                case VK_ERROR_OUT_OF_DATE_KHR: {
+                    spdlog::error("Failed to acquire swapchain image. The swapchain will be recreated");
+                    return nullptr;
+                }
+                default: {
+                    spdlog::warn("Failed to acquire swapchain image: {}", string_VkResult(result));
+                }
             }
         }
 

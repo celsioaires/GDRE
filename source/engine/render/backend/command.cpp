@@ -7,14 +7,14 @@ namespace backend {
         sContext = &context;
 
         // Pool
-        mPool = initializePool(queueFamily);
+        mPool = initializeCommandPool(queueFamily);
 
         if (mPool == nullptr) {
             return false;
         }
 
         // Pool
-        mBuffer = initializeBuffer(mPool);
+        mBuffer = initializeCommandBuffer(mPool);
 
         if (mBuffer == nullptr) {
             return false;
@@ -100,11 +100,7 @@ namespace backend {
         mBuffer.setScissor(0, scissor);
     }
 
-    void Command::pushConstants(const Constants& constants, const vk::raii::PipelineLayout& pipelineLayout) const {
-        mBuffer.pushConstants(*pipelineLayout, constants.stage, 0, sizeof(constants.data), &constants.data);
-    }
-
-    vk::raii::CommandPool Command::initializePool(uint32_t queueFamily) {
+    vk::raii::CommandPool Command::initializeCommandPool(uint32_t queueFamily) {
         // Info
         const vk::CommandPoolCreateInfo createInfo{
             .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
@@ -127,7 +123,7 @@ namespace backend {
         return handle;
     }
 
-    vk::raii::CommandBuffer Command::initializeBuffer(const vk::raii::CommandPool& pool) {
+    vk::raii::CommandBuffer Command::initializeCommandBuffer(const vk::raii::CommandPool& pool) {
         // Info
         const vk::CommandBufferAllocateInfo allocateInfo{
             .commandPool = pool,

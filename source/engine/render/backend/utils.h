@@ -18,15 +18,15 @@ namespace backend {
         glm::vec3 color;
     };
 
-    struct ConstantsData {
+    struct MeshConstants {
         vk::DeviceAddress vertexBuffer;
         glm::vec2 padding;
         glm::mat4 transformMatrix;
     };
 
-    struct Constants {
-        ConstantsData data;
-        vk::ShaderStageFlags stage;
+    static inline const vk::PushConstantRange cMeshConstants{
+        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+        .size = sizeof(MeshConstants)
     };
 
     // Enums

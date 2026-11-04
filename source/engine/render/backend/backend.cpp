@@ -2,21 +2,16 @@
 
 #include <spdlog/spdlog.h>
 
-#include <glm/gtc/matrix_transform.hpp>
-
 namespace backend {
-    bool Backend::initialize(BackendInfo info) {
+    bool Backend::initialize(GLFWwindow* window) {
         // Context, swapchain and command
         if (
-            !mContext.initialize(info.window) ||
+            !mContext.initialize(window) ||
             !mSwapchain.initialize(mContext) ||
             !mCommand.initialize(mContext, mContext.getGraphicsFamily())
         ) {
             return false;
         }
-
-        // Constants
-        mDefaultConstants.stage = vk::ShaderStageFlagBits::eVertex;
 
         // Pipelines
         if (
@@ -25,27 +20,19 @@ namespace backend {
                 mContext,
                 ePipelineTypeGraphics,
                 { "compiled/default.spv" },
-                mDefaultConstants
+                { cMeshConstants }
             )
             // Compute
         ) {
             return false;
         }
 
-        // Triangle vertices
-        const std::vector<Vertex> triangleVertices{
-            { .position{ 0.0, -0.5 }, .color{ 1, 0, 0 } },
-            { .position{ 0.5, 0.5 }, .color{ 0, 1, 0 } },
-            { .position{ -0.5, 0.5 }, .color{ 0, 0, 1 } }
-        };
-
-        // Triangle buffer
-        if (!mTriangleBuffer.initialize(
-            mContext,
-            eBufferTypeVertex,
-            triangleVertices.size() * sizeof(Vertex),
-            triangleVertices.data()
-        )) {
+        // Descriptors
+        if (
+            !mDefaultDescriptor.initialize(mContext, {
+                { vk::DescriptorType::eUniformBuffer, 1 }
+            })
+        ) {
             return false;
         }
 
@@ -68,7 +55,7 @@ namespace backend {
             vk::Result waitResult = device.waitForFences(*submitFence, true, UINT64_MAX);
 
             if (waitResult != vk::Result::eSuccess) {
-
+                spdlog::warn("Failed to wait for fence");
             }
 
             // Acquire swapchain image
@@ -83,7 +70,7 @@ namespace backend {
                     spdlog::error("Failed to initialize swapchain");
                 }
 
-                beginRender();
+                beginRender(); // Retry
             }
 
             // Reset fence
@@ -129,7 +116,7 @@ namespace backend {
         }
     }
 
-    void Backend::renderSquare() {
+    void Backend::renderMesh(const MeshConstants& constants) {
         const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
         const vk::Extent2D swapchainExtent = mSwapchain.getExtent();
 
@@ -143,12 +130,13 @@ namespace backend {
         mCommand.setRenderExtent(swapchainExtent);
 
         // Push constants
-        mDefaultConstants.data = {
-            .vertexBuffer = mTriangleBuffer.getAddress(),
-            .transformMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, 0))//glm::rotate(glm::mat4(1), static_cast<float>(glfwGetTime()), glm::vec3(0, 0, 1))
-        };
-
-        mCommand.pushConstants(mDefaultConstants, mDefaultPipeline.getLayout());
+        commandBuffer.pushConstants(
+            *mDefaultPipeline.getLayout(),
+            cMeshConstants.stageFlags,
+            0,
+            sizeof(MeshConstants),
+            &constants
+        );
 
         // Draw vertices
         commandBuffer.draw(3, 1, 0, 0);

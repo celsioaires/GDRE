@@ -2,11 +2,18 @@
 
 namespace render {
     bool Renderer::initialize(const gui::Window& window) {
-        const backend::BackendInfo info{
-            .window = window.getHandle()
-        };
+        // Backend
+        if (!mBackend.initialize(window.getHandle())) {
+            return false;
+        }
 
-        if (!mBackend.initialize(info)) {
+        // Camera
+        if (!mCamera.initialize(mBackend)) {
+            return false;
+        }
+
+        // Mesh
+        if (!mMesh.initialize(mBackend)) {
             return false;
         }
 
@@ -25,7 +32,7 @@ namespace render {
         mBackend.endRender();
     }
 
-    void Renderer::drawMesh() {
-        mBackend.renderSquare();
+    void Renderer::drawTest() {
+        mBackend.renderMesh(mMesh.getConstants());
     }
 }

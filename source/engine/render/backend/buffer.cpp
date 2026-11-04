@@ -7,27 +7,18 @@ namespace backend {
         sContext = &context;
         mSize = size;
 
-        VmaMemoryUsage memoryUsage{};
+        const VmaMemoryUsage memoryUsage =
+            data == nullptr ? VMA_MEMORY_USAGE_GPU_ONLY : VMA_MEMORY_USAGE_CPU_ONLY;
 
-        if (data == nullptr) {
-            memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
-        }
-        else {
-            memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
-        }
+        VkBufferUsageFlags usage;
 
-        VkBufferUsageFlags usage{};
-
-        // Handle
+        // Handle and allocation
         switch (type) {
-            // Staging
             case eBufferTypeStaging: {
                 usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
                 mHandle = initializeBuffer(size, usage, &mAllocation, memoryUsage);
                 break;
             }
-            // Vertex
             case eBufferTypeVertex: {
                 usage =
                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
@@ -37,14 +28,14 @@ namespace backend {
                 mHandle = initializeBuffer(size, usage, &mAllocation, memoryUsage);
                 break;
             }
-            // Index
             case eBufferTypeIndex: {
-                mHandle = nullptr;
+                usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+                mHandle = initializeBuffer(size, usage, &mAllocation, memoryUsage);
                 break;
             }
-            // Uniform
             case eBufferTypeUniform: {
-                mHandle = nullptr;
+                usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+                mHandle = initializeBuffer(size, usage, &mAllocation, memoryUsage);
                 break;
             }
         }
@@ -69,14 +60,13 @@ namespace backend {
             vmaUnmapMemory(allocator, mAllocation);
         }
 
-        // Address
-        const vk::raii::Device& device = sContext->getDevice();
+        // Get address
+        if (type == eBufferTypeVertex) {
+            const vk::raii::Device& device = sContext->getDevice();
+            const vk::BufferDeviceAddressInfo info{ .buffer = mHandle };
 
-        const vk::BufferDeviceAddressInfo addressInfo{
-            .buffer = mHandle
-        };
-
-        mAddress = device.getBufferAddress(addressInfo);
+            mAddress = device.getBufferAddress(info);
+        }
 
         return true;
     }

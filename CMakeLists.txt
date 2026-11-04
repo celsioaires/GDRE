@@ -75,6 +75,8 @@ add_executable(GDRE
     source/engine/render/backend/descriptor.cpp
     source/engine/render/backend/pipeline.cpp
     source/engine/render/backend/swapchain.cpp
+    source/engine/render/camera.cpp
+    source/engine/render/mesh.cpp
     source/engine/render/renderer.cpp)
 
 # Defines

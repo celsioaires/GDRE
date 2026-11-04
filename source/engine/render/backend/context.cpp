@@ -65,14 +65,23 @@ namespace backend {
             .pImageIndices = &imageIndex
         };
 
-        vk::Result result = mGraphicsQueue.presentKHR(info);
+        // Present
+        const VkResult result = static_cast<VkResult>(mGraphicsQueue.presentKHR(info));
 
-        if (
-            result == vk::Result::eSuboptimalKHR ||
-            result == vk::Result::eErrorOutOfDateKHR
-        ) {
-            spdlog::error("Failed to present swapchain: {}", string_VkResult(static_cast<VkResult>(result)));
-            return false;
+        if (result != VK_SUCCESS) {
+            switch (result) {
+                case VK_SUBOPTIMAL_KHR: {
+                    spdlog::warn("Failed to present swapchain image. The swapchain will be recreated");
+                    return false;
+                }
+                case VK_ERROR_OUT_OF_DATE_KHR: {
+                    spdlog::error("Failed to present swapchain image. The swapchain will be recreated");
+                    return false;
+                }
+                default: {
+                    spdlog::warn("Failed to present swapchain image: {}", string_VkResult(result));
+                }
+            }
         }
 
         return true;

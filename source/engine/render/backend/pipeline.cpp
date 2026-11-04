@@ -4,21 +4,15 @@
 
 #include <spdlog/spdlog.h>
 
-
 namespace backend {
-    bool Pipeline::initialize(const Context& context, PipelineType type, const std::vector<std::string>& files, Constants constants) {
+    bool Pipeline::initialize(const Context& context, PipelineType type, const std::vector<std::string>& files, const std::vector<vk::PushConstantRange>& constants) {
         sContext = &context;
 
         // Shaders
         mShaders = initializeShaders(files);
 
         // Layout
-        vk::PushConstantRange pushConstant{
-            .stageFlags = constants.stage,
-            .size = sizeof(constants.data)
-        };
-
-        mLayout = initializeLayout(pushConstant);
+        mLayout = initializeLayout(constants);
 
         if (mLayout == nullptr) {
             return false;
@@ -89,12 +83,11 @@ namespace backend {
         return shaders;
     }
 
-    vk::raii::PipelineLayout Pipeline::initializeLayout(vk::PushConstantRange pushConstant) {
-
+    vk::raii::PipelineLayout Pipeline::initializeLayout(const std::vector<vk::PushConstantRange>& constants) {
         // Info
         const vk::PipelineLayoutCreateInfo info{
-            .pushConstantRangeCount = 1,
-            .pPushConstantRanges = &pushConstant
+            .pushConstantRangeCount = static_cast<uint32_t>(constants.size()),
+            .pPushConstantRanges = constants.data()
         };
 
         vk::raii::PipelineLayout handle = nullptr;

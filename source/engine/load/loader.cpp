@@ -9,7 +9,7 @@ namespace load {
         fastgltf::Expected<fastgltf::GltfDataBuffer> data = fastgltf::GltfDataBuffer::FromPath(cAssetsDirectory + "gltf/default.glb");
 
         if (data.error() != fastgltf::Error::None) {
-            spdlog::error("Failed to read glTF asset: {}!", fastgltf::getErrorMessage(data.error()));
+            spdlog::error("Failed to read glTF asset: {}", fastgltf::getErrorMessage(data.error()));
             return false;
         }
 

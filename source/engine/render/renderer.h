@@ -4,9 +4,14 @@
 
 #include "backend/backend.h"
 
+#include "camera.h"
+#include "mesh.h"
+
 namespace render {
     class Renderer {
         backend::Backend mBackend;
+        Camera mCamera;
+        Mesh mMesh;
     public:
         bool initialize(const gui::Window& window);
         void cleanup();
@@ -14,7 +19,7 @@ namespace render {
         void beginDraw();
         void endDraw();
 
-        void drawMesh();
+        void drawTest();
 
         // Getters
         const backend::Backend& getBackend() const { return mBackend; };

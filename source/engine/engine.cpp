@@ -42,7 +42,7 @@ namespace engine {
     void Engine::draw() {
         mRenderer.beginDraw();
 
-        mRenderer.drawMesh();
+        mRenderer.drawTest();
         mGui.drawWindows();
 
         mRenderer.endDraw();

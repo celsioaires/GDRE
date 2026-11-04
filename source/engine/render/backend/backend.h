@@ -2,27 +2,26 @@
 
 #include "context.h"
 #include "swapchain.h"
-#include "pipeline.h"
 #include "command.h"
+#include "pipeline.h"
+#include "descriptor.h"
 #include "utils.h"
-#include "buffer.h"
 
 namespace backend {
     class Backend {
         Context mContext;
         Swapchain mSwapchain;
         Command mCommand;
-        Constants mDefaultConstants;
         Pipeline mDefaultPipeline;
-        Buffer mTriangleBuffer;
+        Descriptor mDefaultDescriptor;
     public:
-        bool initialize(BackendInfo info);
+        bool initialize(GLFWwindow* window);
         void cleanup();
 
         void beginRender();
         void endRender();
 
-        void renderSquare();
+        void renderMesh(const MeshConstants& constants);
 
         // Getters
         const Context& getContext() const { return mContext; }
