@@ -17,7 +17,8 @@ namespace render {
     public:
         bool initialize(const backend::Backend& backend);
 
-        void updateData();
+        void updateMatrices();
+        void updateDescriptor() const;
 
         const backend::DescriptorSet& getDescriptorSet() const { return mDescriptorSet; }
     };

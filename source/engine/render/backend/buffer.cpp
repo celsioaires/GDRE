@@ -64,7 +64,7 @@ namespace backend {
         return true;
     }
 
-    void Buffer::mapMemory(const void* data) {
+    void Buffer::mapMemory(const void* data) const {
         const VmaAllocator& allocator = sContext->getAllocator();
 
         void* mappedMemory;

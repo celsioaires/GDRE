@@ -33,11 +33,12 @@ namespace render {
     }
 
     void Renderer::update() {
-        mCamera.updateData();
+        mCamera.updateMatrices();
         mMesh.updateTransform();
     }
 
     void Renderer::draw() {
+        mCamera.updateDescriptor();
         mBackend.render(mCamera.getDescriptorSet(), mMesh.getConstants());
     }
 }

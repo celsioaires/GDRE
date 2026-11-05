@@ -26,12 +26,12 @@ namespace render {
             return false;
         }
 
-        updateData();
+        updateMatrices();
 
         return true;
     }
 
-    void Camera::updateData() {
+    void Camera::updateMatrices() {
         // Window size
         int windowWidth, windowHeight;
         glfwGetWindowSize(mBackend->getContext().getWindow(), &windowWidth, &windowHeight);
@@ -46,8 +46,10 @@ namespace render {
 
         // Uniform buffer
         mUniformBuffer.mapMemory(&mData);
+    }
 
-        // Descriptor set
+    void Camera::updateDescriptor() const {
+        // Set
         const backend::Descriptor& descriptor = mBackend->getDefaultDescriptor();
 
         descriptor.updateSet(mDescriptorSet.handle, 0, vk::DescriptorType::eUniformBuffer, mUniformBuffer.getHandle());

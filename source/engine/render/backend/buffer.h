@@ -15,7 +15,7 @@ namespace backend {
 
         bool initialize(const Context& context, BufferType type, vk::DeviceSize size, const void* data = nullptr);
 
-        void mapMemory(const void* data);
+        void mapMemory(const void* data) const;
 
         const vk::Buffer& getHandle() const { return mHandle; }
         vk::DeviceSize getSize() const { return mSize; }
