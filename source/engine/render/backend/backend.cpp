@@ -13,26 +13,37 @@ namespace backend {
             return false;
         }
 
-        // Pipelines
-        if (
-            // Graphics
-            !mDefaultPipeline.initialize(
-                mContext,
-                ePipelineTypeGraphics,
-                { "compiled/default.spv" },
-                { cMeshConstants }
-            )
-            // Compute
-        ) {
+        // Default descriptor
+        if (!mDefaultDescriptor.initialize(
+            mContext, {
+                { .type = vk::DescriptorType::eUniformBuffer, .descriptorCount = 1 }
+            }
+        )) {
             return false;
         }
 
-        // Descriptors
-        if (
-            !mDefaultDescriptor.initialize(mContext, {
-                { vk::DescriptorType::eUniformBuffer, 1 }
-            })
-        ) {
+        // Default descriptor layout
+        if (!mDefaultDescriptorLayout.initialize(
+            mContext, {
+                {
+                    .binding = 0,
+                    .descriptorType = vk::DescriptorType::eUniformBuffer,
+                    .descriptorCount = 1,
+                    .stageFlags = vk::ShaderStageFlagBits::eVertex
+                }
+            }
+        )) {
+            return false;
+        }
+
+        // Default pipeline
+        if (!mDefaultPipeline.initialize(
+            mContext,
+            ePipelineTypeGraphics,
+            { "compiled/default.spv" },
+            mDefaultDescriptorLayout.getHandle(),
+            { cMeshConstants }
+        )) {
             return false;
         }
 
@@ -43,7 +54,7 @@ namespace backend {
         mContext.waitIdle();
     }
 
-    void Backend::beginRender() {
+    void Backend::beginCommands() {
         const vk::raii::Device& device = mContext.getDevice();
         const vk::raii::Fence& submitFence = mContext.getSubmitFence();
         const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
@@ -70,7 +81,7 @@ namespace backend {
                     spdlog::error("Failed to initialize swapchain");
                 }
 
-                beginRender(); // Retry
+                beginCommands(); // Retry
             }
 
             // Reset fence
@@ -86,9 +97,10 @@ namespace backend {
 
         // Swapchain image barrier (undefined to color)
         mCommand.pipelineBarrier(swapchainImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+
     }
 
-    void Backend::endRender() {
+    void Backend::endCommands() {
         const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
 
         // Swapchain image barrier (color to present)
@@ -116,7 +128,7 @@ namespace backend {
         }
     }
 
-    void Backend::renderMesh(const MeshConstants& constants) {
+    void Backend::render(const DescriptorSet& descriptorSet, const MeshConstants& constants) {
         const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
         const vk::Extent2D swapchainExtent = mSwapchain.getExtent();
 
@@ -124,10 +136,15 @@ namespace backend {
         mCommand.beginRendering(swapchainExtent, vk::AttachmentLoadOp::eClear, mSwapchain.getCurrentView());
 
         // Bind default pipeline
-        commandBuffer.bindPipeline(mDefaultPipeline.getBindPoint(), *mDefaultPipeline.getHandle());
+        const vk::PipelineBindPoint bindPoint = mDefaultPipeline.getBindPoint();
+
+        commandBuffer.bindPipeline(bindPoint, *mDefaultPipeline.getHandle());
 
         // Set render extent
         mCommand.setRenderExtent(swapchainExtent);
+
+        // Bind descriptor sets
+        commandBuffer.bindDescriptorSets(bindPoint, *mDefaultPipeline.getLayout(), 0, *descriptorSet.handle, {});
 
         // Push constants
         commandBuffer.pushConstants(

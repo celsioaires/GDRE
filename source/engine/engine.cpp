@@ -36,13 +36,14 @@ namespace engine {
     }
 
     void Engine::update() {
+        mRenderer.update();
         mGui.prepareWindows();
     }
 
     void Engine::draw() {
         mRenderer.beginDraw();
 
-        mRenderer.drawTest();
+        mRenderer.draw();
         mGui.drawWindows();
 
         mRenderer.endDraw();

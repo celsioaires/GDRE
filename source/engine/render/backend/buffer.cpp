@@ -2,40 +2,44 @@
 
 #include <spdlog/spdlog.h>
 
+#include <vulkan/vk_enum_string_helper.h>
+
 namespace backend {
+    Buffer::~Buffer() {
+        vmaDestroyBuffer(sContext->getAllocator(), mHandle, mAllocation);
+    }
+
     bool Buffer::initialize(const Context& context, BufferType type, vk::DeviceSize size, const void* data) {
         sContext = &context;
         mSize = size;
 
-        const VmaMemoryUsage memoryUsage =
-            data == nullptr ? VMA_MEMORY_USAGE_GPU_ONLY : VMA_MEMORY_USAGE_CPU_ONLY;
+        const VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
 
-        VkBufferUsageFlags usage;
+        vk::BufferUsageFlags usage;
 
         // Handle and allocation
         switch (type) {
             case eBufferTypeStaging: {
-                usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-                mHandle = initializeBuffer(size, usage, &mAllocation, memoryUsage);
+                usage = vk::BufferUsageFlagBits::eTransferSrc;
+                mHandle = initializeBuffer(size, usage, mAllocation, memoryUsage);
                 break;
             }
             case eBufferTypeVertex: {
                 usage =
-                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-                    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+                    vk::BufferUsageFlagBits::eVertexBuffer |
+                    vk::BufferUsageFlagBits::eShaderDeviceAddress;
 
-                mHandle = initializeBuffer(size, usage, &mAllocation, memoryUsage);
+                mHandle = initializeBuffer(size, usage, mAllocation, memoryUsage);
                 break;
             }
             case eBufferTypeIndex: {
-                usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-                mHandle = initializeBuffer(size, usage, &mAllocation, memoryUsage);
+                usage = vk::BufferUsageFlagBits::eIndexBuffer;
+                mHandle = initializeBuffer(size, usage, mAllocation, memoryUsage);
                 break;
             }
             case eBufferTypeUniform: {
-                usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-                mHandle = initializeBuffer(size, usage, &mAllocation, memoryUsage);
+                usage = vk::BufferUsageFlagBits::eUniformBuffer;
+                mHandle = initializeBuffer(size, usage, mAllocation, memoryUsage);
                 break;
             }
         }
@@ -46,18 +50,7 @@ namespace backend {
 
         // Map memory
         if (data != nullptr) {
-            const VmaAllocator& allocator = sContext->getAllocator();
-
-            void* mappedMemory;
-
-            if (vmaMapMemory(allocator, mAllocation, &mappedMemory) != VK_SUCCESS) {
-                spdlog::error("Failed to map buffer memory");
-                return false;
-            }
-
-            memcpy(mappedMemory, data, size);
-
-            vmaUnmapMemory(allocator, mAllocation);
+            mapMemory(data);
         }
 
         // Get address
@@ -71,40 +64,62 @@ namespace backend {
         return true;
     }
 
-    Buffer::~Buffer() {
-        vmaDestroyBuffer(sContext->getAllocator(), mHandle, mAllocation);
+    void Buffer::mapMemory(const void* data) {
+        const VmaAllocator& allocator = sContext->getAllocator();
+
+        void* mappedMemory;
+
+        // Map
+        if (vmaMapMemory(allocator, mAllocation, &mappedMemory) != VK_SUCCESS) {
+            spdlog::error("Failed to map buffer memory");
+        }
+
+        memcpy(mappedMemory, data, mSize);
+
+        vmaUnmapMemory(allocator, mAllocation);
     }
 
-    VkBuffer Buffer::initializeBuffer(vk::DeviceSize size, VkBufferUsageFlags usage, VmaAllocation* allocation, VmaMemoryUsage memoryUsage) {
+    vk::Buffer Buffer::initializeBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, VmaAllocation& allocation, VmaMemoryUsage memoryUsage) {
         // Allocation
-        const VmaAllocationCreateInfo allocationInfo{
-            .usage = memoryUsage
-        };
+        const VmaAllocationCreateInfo allocationInfo{ .usage = memoryUsage };
 
         // Info
-        const VkBufferCreateInfo info{
-            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        const vk::BufferCreateInfo info{
             .size = size,
             .usage = usage,
         };
 
-        // Handle
-        VkBuffer handle;
+        vk::Buffer handle;
 
-        if (vmaCreateBuffer(
+        // Create buffer
+        VkResult result = vmaCreateBuffer(
             sContext->getAllocator(),
-            &info,
+            reinterpret_cast<const VkBufferCreateInfo*>(&info),
             &allocationInfo,
-            &handle,
-            allocation,
+            reinterpret_cast<VkBuffer*>(&handle),
+            &allocation,
             nullptr
-        ) != VK_SUCCESS) {
+        );
+
+        std::string type = "Unknown";
+
+        if (usage & vk::BufferUsageFlagBits::eVertexBuffer) {
+            type = "Vertex";
+        }
+        else if (usage & vk::BufferUsageFlagBits::eIndexBuffer) {
+            type = "Index";
+        }
+        else if (usage & vk::BufferUsageFlagBits::eUniformBuffer) {
+            type = "Uniform";
+        }
+
+        if (result != VK_SUCCESS) {
             // Failed
-            spdlog::error("Failed to create buffer");
+            spdlog::error("Failed to create {} buffer: {}", std::tolower(type[0]), string_VkResult(result));
             return nullptr;
         }
 
-        spdlog::info("Buffer created successfully");
+        spdlog::info("{} buffer created successfully", type);
 
         return handle;
     }

@@ -4,11 +4,37 @@
 
 namespace render {
     bool Camera::initialize(const backend::Backend& backend) {
-        const backend::Context& context = backend.getContext();
+        mBackend = &backend;
 
+        // Descriptor set
+        const backend::Descriptor& descriptor = mBackend->getDefaultDescriptor();
+        const backend::DescriptorLayout& descriptorLayout = mBackend->getDefaultDescriptorLayout();
+
+        mDescriptorSet.handle = descriptor.allocateSet(descriptorLayout.getHandle());
+
+        if (mDescriptorSet.handle == nullptr) {
+            return false;
+        }
+
+        // Uniform buffer
+        if (!mUniformBuffer.initialize(
+            mBackend->getContext(),
+            backend::eBufferTypeUniform,
+            sizeof(mData),
+            nullptr
+        )) {
+            return false;
+        }
+
+        updateData();
+
+        return true;
+    }
+
+    void Camera::updateData() {
         // Window size
         int windowWidth, windowHeight;
-        glfwGetWindowSize(context.getWindow(), &windowWidth, &windowHeight);
+        glfwGetWindowSize(mBackend->getContext().getWindow(), &windowWidth, &windowHeight);
 
         // Data
         mData = {
@@ -19,15 +45,11 @@ namespace render {
         };
 
         // Uniform buffer
-        if (!mUniformBuffer.initialize(
-            context,
-            backend::eBufferTypeUniform,
-            sizeof(mData),
-            &mData
-        )) {
-            return false;
-        }
+        mUniformBuffer.mapMemory(&mData);
 
-        return true;
+        // Descriptor set
+        const backend::Descriptor& descriptor = mBackend->getDefaultDescriptor();
+
+        descriptor.updateSet(mDescriptorSet.handle, 0, vk::DescriptorType::eUniformBuffer, mUniformBuffer.getHandle());
     }
 }

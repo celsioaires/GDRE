@@ -19,7 +19,8 @@ namespace render {
         void beginDraw();
         void endDraw();
 
-        void drawTest();
+        void update();
+        void draw();
 
         // Getters
         const backend::Backend& getBackend() const { return mBackend; };

@@ -12,20 +12,23 @@ namespace backend {
         Context mContext;
         Swapchain mSwapchain;
         Command mCommand;
-        Pipeline mDefaultPipeline;
         Descriptor mDefaultDescriptor;
+        DescriptorLayout mDefaultDescriptorLayout;
+        Pipeline mDefaultPipeline;
     public:
         bool initialize(GLFWwindow* window);
         void cleanup();
 
-        void beginRender();
-        void endRender();
+        void beginCommands();
+        void endCommands();
 
-        void renderMesh(const MeshConstants& constants);
+        void render(const DescriptorSet& descriptorSet, const MeshConstants& constants);
 
         // Getters
         const Context& getContext() const { return mContext; }
         const Swapchain& getSwapchain() const { return mSwapchain; }
         const Command& getCommand() const { return mCommand; }
+        const DescriptorLayout& getDefaultDescriptorLayout() const { return mDefaultDescriptorLayout; }
+        const Descriptor& getDefaultDescriptor() const { return mDefaultDescriptor; };
     };
 }

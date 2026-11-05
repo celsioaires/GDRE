@@ -10,6 +10,9 @@ namespace render {
     public:
         bool initialize(const backend::Backend& backend);
 
+        void updateTransform();
+
+        // Getters
         const backend::MeshConstants& getConstants() const { return mConstants; }
     };
 }

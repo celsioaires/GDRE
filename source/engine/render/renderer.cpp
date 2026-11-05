@@ -25,14 +25,19 @@ namespace render {
     }
 
     void Renderer::beginDraw() {
-        mBackend.beginRender();
+        mBackend.beginCommands();
     }
 
     void Renderer::endDraw() {
-        mBackend.endRender();
+        mBackend.endCommands();
     }
 
-    void Renderer::drawTest() {
-        mBackend.renderMesh(mMesh.getConstants());
+    void Renderer::update() {
+        mCamera.updateData();
+        mMesh.updateTransform();
+    }
+
+    void Renderer::draw() {
+        mBackend.render(mCamera.getDescriptorSet(), mMesh.getConstants());
     }
 }

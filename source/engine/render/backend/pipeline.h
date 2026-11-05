@@ -19,7 +19,7 @@ namespace backend {
             .pColorAttachmentFormats = &Swapchain::cImageFormat
         };
 
-        bool initialize(const Context& context, PipelineType type, const std::vector<std::string>& files, const std::vector<vk::PushConstantRange>& constants);
+        bool initialize(const Context& context, PipelineType type, const std::vector<std::string>& shaderFiles, const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<vk::PushConstantRange>& constants);
 
         // Getters
         const vk::raii::PipelineLayout& getLayout() const { return mLayout; }
@@ -28,7 +28,7 @@ namespace backend {
     private:
         // Initializers
         static std::vector<vk::raii::ShaderModule> initializeShaders(const std::vector<std::string>& files);
-        static vk::raii::PipelineLayout initializeLayout(const std::vector<vk::PushConstantRange>& constants);
+        static vk::raii::PipelineLayout initializeLayout(const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<vk::PushConstantRange>& constants);
         static vk::raii::Pipeline initializeGraphicsPipeline(const std::vector<vk::raii::ShaderModule>& shaders, const vk::raii::PipelineLayout& layout);
         static vk::raii::Pipeline initializeComputePipeline();
     };

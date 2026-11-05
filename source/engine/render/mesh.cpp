@@ -1,5 +1,7 @@
 #include "mesh.h"
 
+#include "glm/ext/matrix_transform.hpp"
+
 namespace render {
     bool Mesh::initialize(const backend::Backend& backend) {
         // Vertices
@@ -26,5 +28,9 @@ namespace render {
         };
 
         return true;
+    }
+
+    void Mesh::updateTransform() {
+        mConstants.transformMatrix = glm::rotate(glm::mat4(1), static_cast<float>(glfwGetTime()), { 0, 1, 0 });
     }
 }

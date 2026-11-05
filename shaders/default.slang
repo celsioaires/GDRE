@@ -33,14 +33,10 @@ VertexOutput vertexMain(uint id : SV_VertexID) {
 
     VertexOutput output;
 
-    output.position = mul(meshConstants.transformMatrix, float4(vertex.position, 0, 1));
-
-    /*
     output.position =
         mul(cameraData.projectionMatrix,
         mul(cameraData.viewMatrix,
         mul(meshConstants.transformMatrix, float4(vertex.position, 0, 1))));
-    */
 
     output.color = vertex.color;
 

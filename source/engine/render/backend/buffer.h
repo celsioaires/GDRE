@@ -6,19 +6,21 @@
 namespace backend {
     class Buffer {
         static inline const Context* sContext;
-
-        VkBuffer mHandle;
+        vk::Buffer mHandle;
         VmaAllocation mAllocation;
         vk::DeviceSize mSize;
         vk::DeviceAddress mAddress;
     public:
-        bool initialize(const Context& context, BufferType type, vk::DeviceSize size, const void* data = nullptr);
-
         ~Buffer();
 
+        bool initialize(const Context& context, BufferType type, vk::DeviceSize size, const void* data = nullptr);
+
+        void mapMemory(const void* data);
+
+        const vk::Buffer& getHandle() const { return mHandle; }
         vk::DeviceSize getSize() const { return mSize; }
-        vk::DeviceAddress getAddress() const { return mAddress; }
+        const vk::DeviceAddress getAddress() const { return mAddress; }
     private:
-        static VkBuffer initializeBuffer(vk::DeviceSize size, VkBufferUsageFlags usage, VmaAllocation* allocation, VmaMemoryUsage memoryUsage);
+        static vk::Buffer initializeBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, VmaAllocation& allocation, VmaMemoryUsage memoryUsage);
     };
 }
