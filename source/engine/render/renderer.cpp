@@ -12,16 +12,27 @@ namespace render {
             return false;
         }
 
-        // Mesh
-        if (!mMesh.initialize(mBackend)) {
-            return false;
-        }
-
         return true;
     }
 
     void Renderer::cleanup() {
         mBackend.cleanup();
+    }
+
+    void Renderer::uploadMesh(Mesh&& mesh) {
+        mMeshes.push_back(std::move(mesh));
+    }
+
+    void Renderer::update() {
+        // Previous frame
+        mBackend.waitCommands();
+
+        for (Mesh& mesh : mMeshes) {
+            mesh.test();
+        }
+
+        // Camera
+        mCamera.updateData();
     }
 
     void Renderer::beginDraw() {
@@ -32,13 +43,19 @@ namespace render {
         mBackend.endCommands();
     }
 
-    void Renderer::update() {
-        mCamera.updateMatrices();
-        mMesh.updateTransform();
-    }
+    void Renderer::drawMeshes() {
+        mBackend.beginRender(mCamera.getDescriptorSet());
 
-    void Renderer::draw() {
-        mCamera.updateDescriptor();
-        mBackend.render(mCamera.getDescriptorSet(), mMesh.getConstants());
+        for (Mesh& mesh : mMeshes) {
+            mBackend.drawVertices(
+                {
+                    .vertexBuffer = mesh.getVertexBuffer().getAddress(),
+                    .transformMatrix = mesh.getTransformMatrix()
+                },
+                mesh.getVertexCount()
+            );
+        }
+
+        mBackend.endRender();
     }
 }

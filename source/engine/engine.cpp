@@ -5,9 +5,10 @@ namespace engine {
         if (
             !mPlatform.initialize() ||
             !mWindow.initialize() ||
+            !mLoader.initialize() ||
             !mRenderer.initialize(mWindow) ||
-            !mGui.initialize(mRenderer) ||
-            !mLoader.load()
+            !mScene.initialize(mLoader, mRenderer) ||
+            !mGui.initialize(mRenderer)
         ) {
             return false;
         }
@@ -43,7 +44,7 @@ namespace engine {
     void Engine::draw() {
         mRenderer.beginDraw();
 
-        mRenderer.draw();
+        mRenderer.drawMeshes();
         mGui.drawWindows();
 
         mRenderer.endDraw();

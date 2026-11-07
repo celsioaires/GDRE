@@ -3,34 +3,24 @@
 #include "glm/ext/matrix_transform.hpp"
 
 namespace render {
-    bool Mesh::initialize(const backend::Backend& backend) {
-        // Vertices
-        const std::vector<backend::Vertex> triangleVertices{
-            { .position{ 0.0, -0.5 }, .color{ 1, 0, 0 } },
-            { .position{ 0.5, 0.5 }, .color{ 0, 1, 0 } },
-            { .position{ -0.5, 0.5 }, .color{ 0, 0, 1 } }
-        };
+    bool Mesh::initialize(const backend::Backend& backend, const std::vector<backend::Vertex>& vertices) {
+        mTransformMatrix = glm::mat4(1);
+        mVertexCount = static_cast<uint32_t>(vertices.size());
 
         // Vertex buffer
         if (!mVertexBuffer.initialize(
             backend.getContext(),
             backend::eBufferTypeVertex,
-            triangleVertices.size() * sizeof(backend::Vertex),
-            triangleVertices.data()
+            vertices.size() * sizeof(backend::Vertex),
+            vertices.data()
         )) {
             return false;
         }
 
-        // Constants
-        mConstants = {
-            .vertexBuffer = mVertexBuffer.getAddress(),
-            .transformMatrix = glm::mat4(1),
-        };
-
         return true;
     }
 
-    void Mesh::updateTransform() {
-        mConstants.transformMatrix = glm::rotate(glm::mat4(1), static_cast<float>(glfwGetTime()), { 0, 1, 0 });
+    void Mesh::test() {
+        mTransformMatrix = glm::rotate(glm::mat4(1), static_cast<float>(glfwGetTime()), glm::vec3(1, 1, 1));
     }
 }

@@ -4,12 +4,13 @@ struct VertexOutput {
 };
 
 struct Vertex {
-    float2 position;
-    float2 padding;
+    float3 position;
+    float padding0;
     float3 color;
+    float padding1;
 };
 
-struct MeshConstants {
+struct PushConstants {
     Vertex* vertexBuffer;
     float2 padding;
     float4x4 transformMatrix;
@@ -21,7 +22,7 @@ struct CameraData {
 };
 
 [[vk::push_constant]]
-MeshConstants meshConstants;
+PushConstants drawConstants;
 
 [[vk::binding(0, 0)]]
 ConstantBuffer<CameraData> cameraData;
@@ -29,14 +30,14 @@ ConstantBuffer<CameraData> cameraData;
 [shader("vertex")]
 
 VertexOutput vertexMain(uint id : SV_VertexID) {
-    Vertex vertex = meshConstants.vertexBuffer[id];
+    Vertex vertex = drawConstants.vertexBuffer[id];
 
     VertexOutput output;
 
     output.position =
         mul(cameraData.projectionMatrix,
         mul(cameraData.viewMatrix,
-        mul(meshConstants.transformMatrix, float4(vertex.position, 0, 1))));
+        mul(drawConstants.transformMatrix, float4(vertex.position, 1))));
 
     output.color = vertex.color;
 

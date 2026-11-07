@@ -66,7 +66,7 @@ namespace backend {
         };
 
         // Present
-        const VkResult result = static_cast<VkResult>(mGraphicsQueue.presentKHR(info));
+        const auto result = static_cast<VkResult>(mGraphicsQueue.presentKHR(info));
 
         if (result != VK_SUCCESS) {
             switch (result) {
@@ -100,7 +100,7 @@ namespace backend {
     vk::raii::Instance Context::initializeInstance(const vk::raii::Context& context) {
         // Application info
         const char* applicationName = "GDRE";
-        const uint32_t applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+        uint32_t applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 
         const vk::ApplicationInfo applicationInfo{
             .pApplicationName = applicationName,
@@ -428,6 +428,6 @@ namespace backend {
         void* userData
     ) {
         spdlog::error("Validation error:\n{}", callbackData->pMessage);
-        return vk::False;
+        return false;
     }
 }

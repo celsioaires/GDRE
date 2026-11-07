@@ -57,6 +57,7 @@ namespace gui {
     }
 
     void Gui::cleanup() {
+        // Backends
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
 

@@ -14,6 +14,7 @@ namespace backend {
         Command mCommand;
         Descriptor mDefaultDescriptor;
         DescriptorLayout mDefaultDescriptorLayout;
+        PushConstants mDrawPushConstants;
         Pipeline mDefaultPipeline;
     public:
         bool initialize(GLFWwindow* window);
@@ -21,8 +22,12 @@ namespace backend {
 
         void beginCommands();
         void endCommands();
+        void waitCommands();
 
-        void render(const DescriptorSet& descriptorSet, const MeshConstants& constants);
+        void beginRender(const DescriptorSet& descriptorSet);
+        void endRender();
+
+        void drawVertices(const PushConstantsData& pushConstantsData, uint32_t count);
 
         // Getters
         const Context& getContext() const { return mContext; }

@@ -6,6 +6,7 @@ namespace backend {
     class Swapchain {
         static inline const Context* sContext;
 
+        // Objects
         vk::Extent2D mExtent;
         vk::raii::SwapchainKHR mHandle = nullptr;
         std::vector<vk::Image> mImages;

@@ -2,6 +2,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <vulkan/vk_enum_string_helper.h>
+
 namespace backend {
     bool Backend::initialize(GLFWwindow* window) {
         // Context, swapchain and command
@@ -36,13 +38,19 @@ namespace backend {
             return false;
         }
 
+        // Draw push constants
+        mDrawPushConstants = {
+            .data = { .transformMatrix = glm::mat4(1) },
+            .stage = vk::ShaderStageFlagBits::eVertex
+        };
+
         // Default pipeline
         if (!mDefaultPipeline.initialize(
             mContext,
             ePipelineTypeGraphics,
             { "compiled/default.spv" },
             mDefaultDescriptorLayout.getHandle(),
-            { cMeshConstants }
+            { mDrawPushConstants }
         )) {
             return false;
         }
@@ -55,20 +63,9 @@ namespace backend {
     }
 
     void Backend::beginCommands() {
-        const vk::raii::Device& device = mContext.getDevice();
-        const vk::raii::Fence& submitFence = mContext.getSubmitFence();
-        const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
-
         vk::Image swapchainImage;
 
         try {
-            // Wait fence
-            vk::Result waitResult = device.waitForFences(*submitFence, true, UINT64_MAX);
-
-            if (waitResult != vk::Result::eSuccess) {
-                spdlog::warn("Failed to wait for fence");
-            }
-
             // Acquire swapchain image
             swapchainImage = mSwapchain.acquireImage(mContext.getAcquireSemaphore());
 
@@ -85,10 +82,10 @@ namespace backend {
             }
 
             // Reset fence
-            device.resetFences(*submitFence);
+            mContext.getDevice().resetFences(*mContext.getSubmitFence());
 
             // Begin command buffer
-            commandBuffer.begin({});
+            mCommand.getBuffer().begin({});
         }
         catch (const vk::SystemError& error) {
             // Failed
@@ -97,7 +94,6 @@ namespace backend {
 
         // Swapchain image barrier (undefined to color)
         mCommand.pipelineBarrier(swapchainImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
-
     }
 
     void Backend::endCommands() {
@@ -128,7 +124,16 @@ namespace backend {
         }
     }
 
-    void Backend::render(const DescriptorSet& descriptorSet, const MeshConstants& constants) {
+    void Backend::waitCommands() {
+        // Wait submit fence
+        vk::Result waitResult = mContext.getDevice().waitForFences(*mContext.getSubmitFence(), true, UINT64_MAX);
+
+        if (waitResult != vk::Result::eSuccess) {
+            spdlog::error("Failed to wait for fence", string_VkResult(static_cast<VkResult>(waitResult)));
+        }
+    }
+
+    void Backend::beginRender(const DescriptorSet& descriptorSet) {
         const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
         const vk::Extent2D swapchainExtent = mSwapchain.getExtent();
 
@@ -144,21 +149,29 @@ namespace backend {
         mCommand.setRenderExtent(swapchainExtent);
 
         // Bind descriptor sets
-        commandBuffer.bindDescriptorSets(bindPoint, *mDefaultPipeline.getLayout(), 0, *descriptorSet.handle, {});
+        commandBuffer.bindDescriptorSets(bindPoint, *mDefaultPipeline.getLayout(), 0, *descriptorSet.getHandle(), {});
+    }
 
-        // Push constants
+    void Backend::endRender() {
+        // End rendering
+        mCommand.getBuffer().endRendering();
+    }
+
+    void Backend::drawVertices(const PushConstantsData& pushConstants, uint32_t count) {
+        const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
+
+        // Push draw constants
+        mDrawPushConstants.data = pushConstants;
+
         commandBuffer.pushConstants(
             *mDefaultPipeline.getLayout(),
-            cMeshConstants.stageFlags,
+            mDrawPushConstants.stage,
             0,
-            sizeof(MeshConstants),
-            &constants
+            sizeof(PushConstantsData),
+            &mDrawPushConstants.data
         );
 
         // Draw vertices
-        commandBuffer.draw(3, 1, 0, 0);
-
-        // End rendering
-        commandBuffer.endRendering();
+        commandBuffer.draw(count, 1, 0, 0);
     }
 }

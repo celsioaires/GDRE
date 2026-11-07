@@ -2,17 +2,24 @@
 
 #include "backend/backend.h"
 #include "backend/buffer.h"
+#include "backend/vertex.h"
 
 namespace render {
     class Mesh {
+        glm::mat4 mTransformMatrix;
+        uint32_t mVertexCount;
         backend::Buffer mVertexBuffer;
-        backend::MeshConstants mConstants;
     public:
-        bool initialize(const backend::Backend& backend);
+        bool initialize(const backend::Backend& backend, const std::vector<backend::Vertex>& vertices);
 
-        void updateTransform();
+        void test();
 
         // Getters
-        const backend::MeshConstants& getConstants() const { return mConstants; }
+        glm::mat4 getTransformMatrix() const { return mTransformMatrix; }
+        uint32_t getVertexCount() const { return mVertexCount; }
+        const backend::Buffer& getVertexBuffer() const { return mVertexBuffer; }
+
+        // Setters
+        void setTransformMatrix(const glm::mat4& matrix) { mTransformMatrix = matrix; }
     };
 }

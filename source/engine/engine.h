@@ -3,16 +3,18 @@
 #include "core/platform.h"
 #include "gui/window.h"
 #include "gui/gui.h"
-#include "load/loader.h"
+#include "asset/loader.h"
 #include "render/renderer.h"
+#include "scene/scene.h"
 
 namespace engine {
     class Engine {
         core::Platform mPlatform;
         gui::Window mWindow;
-        gui::Gui mGui;
-        load::Loader mLoader;
+        asset::Loader mLoader;
         render::Renderer mRenderer;
+        scene::Scene mScene;
+        gui::Gui mGui;
     public:
         bool initialize();
         void cleanup();

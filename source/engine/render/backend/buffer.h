@@ -6,12 +6,21 @@
 namespace backend {
     class Buffer {
         static inline const Context* sContext;
+
+        // Objects
         vk::Buffer mHandle;
         VmaAllocation mAllocation;
         vk::DeviceSize mSize;
         vk::DeviceAddress mAddress;
     public:
+        Buffer() = default;
         ~Buffer();
+
+        Buffer(Buffer&& other) noexcept :
+            mHandle(std::exchange(other.mHandle, vk::Buffer{})),
+            mAllocation(std::exchange(other.mAllocation, nullptr)),
+            mSize(std::exchange(other.mSize, 0)),
+            mAddress(std::exchange(other.mAddress, 0)) {}
 
         bool initialize(const Context& context, BufferType type, vk::DeviceSize size, const void* data = nullptr);
 

@@ -10,17 +10,20 @@
 namespace render {
     class Renderer {
         backend::Backend mBackend;
+        std::vector<Mesh> mMeshes;
         Camera mCamera;
-        Mesh mMesh;
     public:
         bool initialize(const gui::Window& window);
         void cleanup();
 
+        void uploadMesh(Mesh&& mesh);
+
+        void update();
+
         void beginDraw();
         void endDraw();
 
-        void update();
-        void draw();
+        void drawMeshes();
 
         // Getters
         const backend::Backend& getBackend() const { return mBackend; };

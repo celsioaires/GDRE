@@ -12,21 +12,15 @@ namespace backend {
         GLFWwindow* window;
     };
 
-    struct Vertex {
-        glm::vec2 position;
-        glm::vec2 padding;
-        glm::vec3 color;
-    };
-
-    struct MeshConstants {
+    struct PushConstantsData {
         vk::DeviceAddress vertexBuffer;
         glm::vec2 padding;
         glm::mat4 transformMatrix;
     };
 
-    static inline const vk::PushConstantRange cMeshConstants{
-        .stageFlags = vk::ShaderStageFlagBits::eVertex,
-        .size = sizeof(MeshConstants)
+    struct PushConstants {
+        PushConstantsData data;
+        vk::ShaderStageFlags stage;
     };
 
     // Enums

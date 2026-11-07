@@ -57,6 +57,10 @@ add_executable(GDRE
     source/main.cpp
     # engine
     source/engine/engine.cpp
+    # engine asset
+    source/engine/asset/gltf.cpp
+    source/engine/asset/loader.cpp
+    source/engine/asset/mesh.cpp
     # engine core
     source/engine/core/platform.cpp
     source/engine/core/time.cpp
@@ -65,8 +69,6 @@ add_executable(GDRE
     source/engine/gui/hierarchy.cpp
     source/engine/gui/inspector.cpp
     source/engine/gui/window.cpp
-    # engine load
-    source/engine/load/loader.cpp
     # engine render
     source/engine/render/backend/backend.cpp
     source/engine/render/backend/buffer.cpp
@@ -77,7 +79,9 @@ add_executable(GDRE
     source/engine/render/backend/swapchain.cpp
     source/engine/render/camera.cpp
     source/engine/render/mesh.cpp
-    source/engine/render/renderer.cpp)
+    source/engine/render/renderer.cpp
+    # engine scene
+    source/engine/scene/scene.cpp)
 
 # Defines
 target_compile_definitions(GDRE PRIVATE

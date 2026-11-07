@@ -39,23 +39,44 @@ namespace backend {
         return handle;
     }
 
-    bool Descriptor::initialize(const Context& context, const std::vector<vk::DescriptorPoolSize>& poolSizes) {
+    bool DescriptorSet::initialize(const Context& context, const vk::raii::DescriptorPool& pool, const vk::raii::DescriptorSetLayout& layout) {
         sContext = &context;
 
-        // Pool
-        mPool = initializeDescriptorPool(poolSizes);
+        mHandle = initializeDescriptorSet(pool, layout);
 
-        if (mPool == nullptr) {
+        if (mHandle == nullptr) {
             return false;
         }
 
         return true;
     }
 
-    vk::raii::DescriptorSet Descriptor::allocateSet(const vk::raii::DescriptorSetLayout& layout) const {
+    void DescriptorSet::updateBinding(uint32_t index, vk::DescriptorType type, vk::Buffer buffer) const {
+        // Buffer info
+        vk::DescriptorBufferInfo bufferInfo;
+
+        if (buffer != nullptr) {
+            bufferInfo.buffer = buffer;
+            bufferInfo.range = vk::WholeSize;
+        }
+
+        // Write
+        const vk::WriteDescriptorSet write{
+            .dstSet = *mHandle,
+            .dstBinding = index,
+            .descriptorCount = 1,
+            .descriptorType = type,
+            .pBufferInfo = &bufferInfo
+        };
+
+        // Update
+        sContext->getDevice().updateDescriptorSets(write, {});
+    }
+
+    vk::raii::DescriptorSet DescriptorSet::initializeDescriptorSet(const vk::raii::DescriptorPool& pool, const vk::raii::DescriptorSetLayout& layout) {
         // Info
         const vk::DescriptorSetAllocateInfo info{
-            .descriptorPool = *mPool,
+            .descriptorPool = *pool,
             .descriptorSetCount = 1,
             .pSetLayouts = &*layout
         };
@@ -76,26 +97,17 @@ namespace backend {
         return handle;
     }
 
-    void Descriptor::updateSet(const vk::raii::DescriptorSet& set, uint32_t binding, vk::DescriptorType bindingType, vk::Buffer buffer) const {
-        // Buffer info
-        vk::DescriptorBufferInfo bufferInfo;
+    bool Descriptor::initialize(const Context& context, const std::vector<vk::DescriptorPoolSize>& poolSizes) {
+        sContext = &context;
 
-        if (buffer != nullptr) {
-            bufferInfo.buffer = buffer;
-            bufferInfo.range = vk::WholeSize;
+        // Pool
+        mPool = initializeDescriptorPool(poolSizes);
+
+        if (mPool == nullptr) {
+            return false;
         }
 
-        // Write
-        const vk::WriteDescriptorSet write{
-            .dstSet = *set,
-            .dstBinding = binding,
-            .descriptorCount = 1,
-            .descriptorType = bindingType,
-            .pBufferInfo = &bufferInfo
-        };
-
-        // Update
-        sContext->getDevice().updateDescriptorSets(write, {});
+        return true;
     }
 
     vk::raii::DescriptorPool Descriptor::initializeDescriptorPool(const std::vector<vk::DescriptorPoolSize>& sizes) {

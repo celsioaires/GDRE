@@ -5,14 +5,23 @@
 #include <spdlog/spdlog.h>
 
 namespace backend {
-    bool Pipeline::initialize(const Context& context, PipelineType type, const std::vector<std::string>& shaderFiles, const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<vk::PushConstantRange>& constants) {
+    bool Pipeline::initialize(const Context& context, PipelineType type, const std::vector<std::string>& shaderFiles, const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<PushConstants>& pushConstants) {
         sContext = &context;
 
         // Shaders
         mShaders = initializeShaders(shaderFiles);
 
         // Layout
-        mLayout = initializeLayout(descriptorLayout, constants);
+        std::vector<vk::PushConstantRange> pushConstantRanges;
+
+        for (const PushConstants& pushConstant : pushConstants) {
+            pushConstantRanges.push_back({
+                .stageFlags = pushConstant.stage,
+                .size = sizeof(PushConstantsData)
+            });
+        }
+
+        mLayout = initializeLayout(descriptorLayout, pushConstantRanges);
 
         if (mLayout == nullptr) {
             return false;
@@ -83,13 +92,13 @@ namespace backend {
         return shaders;
     }
 
-    vk::raii::PipelineLayout Pipeline::initializeLayout(const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<vk::PushConstantRange>& constants) {
+    vk::raii::PipelineLayout Pipeline::initializeLayout(const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<vk::PushConstantRange>& pushConstants) {
         // Info
         const vk::PipelineLayoutCreateInfo info{
             .setLayoutCount = 1,
             .pSetLayouts = &*descriptorLayout,
-            .pushConstantRangeCount = static_cast<uint32_t>(constants.size()),
-            .pPushConstantRanges = constants.data()
+            .pushConstantRangeCount = static_cast<uint32_t>(pushConstants.size()),
+            .pPushConstantRanges = pushConstants.data()
         };
 
         vk::raii::PipelineLayout handle = nullptr;
