@@ -29,9 +29,7 @@ namespace asset {
         fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(
             asset,
             positionAccessor,
-            [&](fastgltf::math::fvec3 position, size_t index) {
-                vertices[initialVertex + index].setPosition(position);
-            }
+            [&](fastgltf::math::fvec3 position, size_t index) { vertices[initialVertex + index].setPosition(position); }
         );
 
         // Color attribute
@@ -43,17 +41,7 @@ namespace asset {
             fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec4>(
                 asset,
                 asset.accessors[colorAttribute->accessorIndex],
-                [&](fastgltf::math::fvec4 color, size_t index) {
-                    spdlog::info(
-         "Color {}: {}, {}, {}, {}",
-         index,
-         color.x(),
-         color.y(),
-         color.z(),
-         color.w()
-     );
-                    vertices[initialVertex + index].setColor(color);
-                }
+                [&](fastgltf::math::fvec4 color, size_t index) { vertices[initialVertex + index].setColor(color); }
             );
         }
 
@@ -64,16 +52,10 @@ namespace asset {
             fastgltf::iterateAccessorWithIndex<uint32_t>(
                 asset,
                 indexAccessor,
-                [&](uint32_t index, size_t) {
-                    mVertices.push_back(vertices[index]);
-                }
+                [&](uint32_t index, size_t) { mVertices.push_back(vertices[index]); }
             );
         } else {
-            mVertices.insert(
-                mVertices.end(),
-                vertices.begin(),
-                vertices.end()
-            );
+            mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
         }
     }
 

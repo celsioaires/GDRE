@@ -16,12 +16,12 @@ namespace scene {
                     const std::vector<asset::Vertex>& vertices = primitive.getVertices();
 
                     // Convert vertices
-                    std::vector<backend::Vertex> convertedVertices(vertices.size());
+                    std::vector<backend::Vertex> backendVertices(vertices.size());
 
                     int i = 0;
 
                     for (const asset::Vertex& vertice : vertices) {
-                        convertedVertices[i] = {
+                        backendVertices[i] = {
                             .position = { vertice.getPosition().x(), vertice.getPosition().y(), vertice.getPosition().z() },
                             .color = { vertice.getColor().x(), vertice.getColor().y(), vertice.getColor().z() },
                         };
@@ -30,13 +30,7 @@ namespace scene {
                     }
 
                     // Upload mesh
-                    render::Mesh mesh;
-
-                    if (!mesh.initialize(renderer.getBackend(), convertedVertices)) {
-                        return false;
-                    }
-
-                    renderer.uploadMesh(std::move(mesh));
+                    renderer.uploadMesh(backendVertices);
                 }
             }
         }

@@ -19,8 +19,16 @@ namespace render {
         mBackend.cleanup();
     }
 
-    void Renderer::uploadMesh(Mesh&& mesh) {
+    bool Renderer::uploadMesh(const std::vector<backend::Vertex>& vertices) {
+        Mesh mesh;
+
+        if (!mesh.initialize(mBackend, vertices)) {
+            return false;
+        }
+
         mMeshes.push_back(std::move(mesh));
+
+        return true;
     }
 
     void Renderer::update() {

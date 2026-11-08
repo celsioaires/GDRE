@@ -16,7 +16,7 @@ namespace render {
         bool initialize(const gui::Window& window);
         void cleanup();
 
-        void uploadMesh(Mesh&& mesh);
+        bool uploadMesh(const std::vector<backend::Vertex>& vertices);
 
         void update();
 
