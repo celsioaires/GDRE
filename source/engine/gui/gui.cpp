@@ -7,7 +7,7 @@
 #define IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING
 #include <backends/imgui_impl_vulkan.h>
 
-namespace gui {
+namespace core {
     Gui::~Gui() {
         // Backends
         ImGui_ImplVulkan_Shutdown();

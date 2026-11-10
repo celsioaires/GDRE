@@ -7,6 +7,8 @@
 namespace asset {
     class Vertex {
         fastgltf::math::fvec3 mPosition;
+        fastgltf::math::fvec3 mNormal;
+        fastgltf::math::fvec2 mUv;
         fastgltf::math::fvec4 mColor;
     public:
         // Getters
@@ -15,6 +17,8 @@ namespace asset {
 
         // Setters
         void setPosition(const fastgltf::math::fvec3& position) { mPosition = position; }
+        void setNormal(const fastgltf::math::fvec3& normal) { mNormal = normal; }
+        void setUv(const fastgltf::math::fvec2& uv) { mUv = uv; }
         void setColor(const fastgltf::math::fvec4& color) { mColor = color; }
     };
 
@@ -32,7 +36,7 @@ namespace asset {
     class Mesh {
         std::vector<Primitive> mPrimitives;
     public:
-        void load(const fastgltf::Asset& asset, const fastgltf::Mesh&);
+        void load(const fastgltf::Asset& asset, const fastgltf::Mesh& mesh);
 
         // Getters
         const std::vector<Primitive>& getPrimitives() const { return mPrimitives ; }

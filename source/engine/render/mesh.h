@@ -14,7 +14,7 @@ namespace render {
     public:
         bool initialize(const backend::Backend& backend, const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices);
 
-        void test();
+        void updateTransform();
 
         // Getters
         glm::mat4 getTransformMatrix() const { return mTransformMatrix; }

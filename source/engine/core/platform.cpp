@@ -21,6 +21,10 @@ namespace core {
 
         spdlog::info("GLFW initialized successfully");
 
+        if (!mWindow.initialize()) {
+            return false;
+        }
+
         return true;
     }
 

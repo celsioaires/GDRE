@@ -4,12 +4,15 @@
 
 namespace scene {
     bool Scene::initialize(const asset::Loader& loader, render::Renderer& renderer) {
+        // Assets
         const std::vector<asset::Gltf>& gltfAssets = loader.getGltfAssets();
 
         for (const asset::Gltf& asset : gltfAssets) {
+            // Meshes
             const std::vector<asset::Mesh>& meshes = asset.getMeshes();
 
             for (const asset::Mesh& mesh : meshes) {
+                // Primitives
                 const std::vector<asset::Primitive>& primitives = mesh.getPrimitives();
 
                 for (const asset::Primitive& primitive : primitives) {

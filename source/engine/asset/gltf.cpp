@@ -22,7 +22,7 @@ namespace asset {
 
         mVertices.resize(vertexOffset + positionAccessor.count);
 
-        // Position
+        // Positions
         fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(
             asset,
             positionAccessor,
@@ -31,10 +31,38 @@ namespace asset {
             }
         );
 
+        // Normal attribute
+        const auto normalAttribute = primitive.findAttribute("NORMAL");
+
+        // Normals
+        if (normalAttribute != primitive.attributes.end()) {
+            fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(
+                asset,
+                asset.accessors[normalAttribute->accessorIndex],
+                [&](fastgltf::math::fvec3 normal, size_t index) {
+                    mVertices[initialVertex + index].setNormal(normal);
+                }
+            );
+        }
+
+        // Uv attribute
+        const auto uvAttribute = primitive.findAttribute("TEXCOORD_0");
+
+        // Uvs
+        if (uvAttribute != primitive.attributes.end()) {
+            fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec2>(
+                asset,
+                asset.accessors[uvAttribute->accessorIndex],
+                [&](fastgltf::math::fvec2 uv, size_t index) {
+                    mVertices[initialVertex + index].setUv(uv);
+                }
+            );
+        }
+        
         // Color attribute
         const auto colorAttribute = primitive.findAttribute("COLOR_0");
 
-        // Color
+        // Colors
         if (colorAttribute != primitive.attributes.end()) {
             fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec4>(
                 asset,
@@ -47,18 +75,20 @@ namespace asset {
 
         // Indices
         if (primitive.indicesAccessor.has_value()) {
-            const fastgltf::Accessor& indexAccessor = asset.accessors[*primitive.indicesAccessor];
-
-            fastgltf::iterateAccessorWithIndex<uint32_t>(asset, indexAccessor, [&](uint32_t index, size_t) {
-                mIndices.push_back(static_cast<uint32_t>(vertexOffset + index));
-            });
+            fastgltf::iterateAccessor<uint32_t>(
+                asset,
+                asset.accessors[*primitive.indicesAccessor],
+                [&](uint32_t index) {
+                    mIndices.push_back(static_cast<uint32_t>(vertexOffset + index));
+                }
+            );
         }
     }
 
     void Mesh::load(const fastgltf::Asset& asset, const fastgltf::Mesh& mesh) {
+        // Primitives
         for (const fastgltf::Primitive& fprimitive : mesh.primitives) {
             Primitive primitive;
-
             primitive.load(asset, fprimitive);
 
             mPrimitives.push_back(std::move(primitive));

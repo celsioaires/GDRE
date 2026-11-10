@@ -6,7 +6,7 @@ namespace render {
     bool Mesh::initialize(const backend::Backend& backend, const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices) {
         mTransformMatrix = glm::mat4(1);
 
-        mVertexCount = static_cast<uint32_t>(vertices.size());
+        mVertexCount = vertices.size();
         mIndexCount = static_cast<uint32_t>(indices.size());
 
         // Vertex buffer
@@ -32,7 +32,7 @@ namespace render {
         return true;
     }
 
-    void Mesh::test() {
+    void Mesh::updateTransform() {
         mTransformMatrix = glm::rotate(glm::mat4(1), static_cast<float>(glfwGetTime()), { 0, 1, 0 });
     }
 }

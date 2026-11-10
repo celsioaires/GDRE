@@ -2,7 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace gui {
+namespace core {
     Window::~Window() {
         glfwDestroyWindow(mHandle);
     }
@@ -25,6 +25,10 @@ namespace gui {
         glfwSetKeyCallback(mHandle, keyCallback);
 
         return true;
+    }
+
+    void Window::maximize() const {
+        glfwMaximizeWindow(mHandle);
     }
 
     bool Window::isOpen() const {

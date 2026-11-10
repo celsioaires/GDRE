@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 
-namespace gui {
+namespace core {
     class Inspector {
     public:
         void draw(const ImGuiWindowFlags flags) const;

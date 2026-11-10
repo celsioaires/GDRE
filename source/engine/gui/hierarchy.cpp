@@ -1,6 +1,6 @@
 #include "hierarchy.h"
 
-namespace gui {
+namespace core {
     void Hierarchy::draw(const ImGuiWindowFlags flags) const {
         ImGui::Begin("Hierarchy", nullptr, flags);
 

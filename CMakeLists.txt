@@ -67,7 +67,7 @@ add_executable(GDRE
     source/engine/gui/gui.cpp
     source/engine/gui/hierarchy.cpp
     source/engine/gui/inspector.cpp
-    source/engine/gui/window.cpp
+        source/engine/core/window.cpp
     # engine render
     source/engine/render/backend/backend.cpp
     source/engine/render/backend/buffer.cpp

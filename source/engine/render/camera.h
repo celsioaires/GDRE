@@ -10,6 +10,7 @@ namespace render {
     };
 
     class Camera {
+        // Objects
         const backend::Backend* mBackend;
         CameraData mData;
         backend::DescriptorSet mDescriptorSet;
@@ -19,6 +20,7 @@ namespace render {
 
         void updateData();
 
+        // Getters
         const backend::DescriptorSet& getDescriptorSet() const { return mDescriptorSet; }
     };
 }

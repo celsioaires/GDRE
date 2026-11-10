@@ -5,7 +5,7 @@
 #include "hierarchy.h"
 #include "inspector.h"
 
-namespace gui {
+namespace core {
     class Gui {
         const backend::Backend* mBackend = nullptr;
         Hierarchy mHierarchy;

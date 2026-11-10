@@ -4,9 +4,8 @@ namespace engine {
     bool Engine::initialize() {
         if (
             !mPlatform.initialize() ||
-            !mWindow.initialize() ||
             !mLoader.initialize() ||
-            !mRenderer.initialize(mWindow) ||
+            !mRenderer.initialize(mPlatform) ||
             !mScene.initialize(mLoader, mRenderer) ||
             !mGui.initialize(mRenderer)
         ) {
@@ -21,10 +20,14 @@ namespace engine {
     }
 
     void Engine::run() {
-        while (mWindow.isOpen()) {
+        const core::Window& window = mPlatform.getWindow();
+
+        window.maximize();
+
+        while (window.isOpen()) {
             mPlatform.pollEvents();
 
-            if (mWindow.isMinimized()) {
+            if (window.isMinimized()) {
                 continue;
             }
 
@@ -35,14 +38,13 @@ namespace engine {
 
     void Engine::update() {
         mGui.prepareWindows();
-
-        mRenderer.update();
+        mRenderer.updateScene();
     }
 
     void Engine::draw() {
         mRenderer.beginDraw();
 
-        mRenderer.drawMeshes();
+        mRenderer.drawScene();
         mGui.drawWindows();
 
         mRenderer.endDraw();

@@ -1,6 +1,6 @@
 #include "inspector.h"
 
-namespace gui {
+namespace core {
     void Inspector::draw(const ImGuiWindowFlags flags) const {
         ImGui::Begin("Inspector", nullptr, flags);
 

@@ -2,13 +2,15 @@
 
 #include <GLFW/glfw3.h>
 
-namespace gui {
+namespace core {
     class Window {
         GLFWwindow* mHandle;
     public:
         ~Window();
 
         bool initialize();
+
+        void maximize() const;
 
         bool isOpen() const;
         bool isMinimized() const;

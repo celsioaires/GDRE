@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 
-namespace gui {
+namespace core {
     class Hierarchy {
     public:
         void draw(const ImGuiWindowFlags flags) const;

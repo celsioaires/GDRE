@@ -1,9 +1,11 @@
 #include "renderer.h"
 
 namespace render {
-    bool Renderer::initialize(const gui::Window& window) {
+    bool Renderer::initialize(const core::Platform& platform) {
+        mPlatform = &platform;
+
         // Backend
-        if (!mBackend.initialize(window.getHandle())) {
+        if (!mBackend.initialize(mPlatform->getWindow().getHandle())) {
             return false;
         }
 
@@ -27,12 +29,13 @@ namespace render {
         return true;
     }
 
-    void Renderer::update() {
+    void Renderer::updateScene() {
         // Previous frame
         mBackend.waitCommands();
 
+        // Meshes
         for (Mesh& mesh : mMeshes) {
-            mesh.test();
+            mesh.updateTransform();
         }
 
         // Camera
@@ -47,7 +50,7 @@ namespace render {
         mBackend.endCommands();
     }
 
-    void Renderer::drawMeshes() const {
+    void Renderer::drawScene() const {
         mBackend.beginRender(mCamera.getDescriptorSet());
 
         for (const Mesh& mesh : mMeshes) {
@@ -67,5 +70,4 @@ namespace render {
     void Renderer::waitBackend() const {
         mBackend.waitContext();
     }
-
 }
