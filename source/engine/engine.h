@@ -17,7 +17,7 @@ namespace engine {
         gui::Gui mGui;
     public:
         bool initialize();
-        void cleanup();
+        void shutdown();
 
         void run();
     private:

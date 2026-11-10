@@ -17,7 +17,8 @@ namespace backend {
     public:
         static inline const vk::PipelineRenderingCreateInfo cRenderingInfo{
             .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &Swapchain::cImageFormat
+            .pColorAttachmentFormats = &Swapchain::cImageFormat,
+            .depthAttachmentFormat = vk::Format::eD32Sfloat
         };
 
         bool initialize(const Context& context, PipelineType type, const std::vector<std::string>& shaderFiles, const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<PushConstants>& pushConstants);

@@ -6,8 +6,9 @@ namespace gui {
     class Window {
         GLFWwindow* mHandle;
     public:
+        ~Window();
+
         bool initialize();
-        void cleanup();
 
         bool isOpen() const;
         bool isMinimized() const;

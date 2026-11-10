@@ -42,7 +42,6 @@ namespace backend {
 
     void Swapchain::cleanup() {
         sContext = nullptr;
-
         mViews.clear();
         mHandle = nullptr;
         mImages.clear();

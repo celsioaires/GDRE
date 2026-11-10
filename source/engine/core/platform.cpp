@@ -5,6 +5,10 @@
 #include <GLFW/glfw3.h>
 
 namespace core {
+    Platform::~Platform() {
+        glfwTerminate();
+    }
+
     bool Platform::initialize() {
         // Hints
         glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11); // X11
@@ -18,10 +22,6 @@ namespace core {
         spdlog::info("GLFW initialized successfully");
 
         return true;
-    }
-
-    void Platform::cleanup() {
-        glfwTerminate();
     }
 
     void Platform::pollEvents() {

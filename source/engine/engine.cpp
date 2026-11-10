@@ -16,11 +16,8 @@ namespace engine {
         return true;
     }
 
-    void Engine::cleanup() {
-        mRenderer.cleanup();
-        mGui.cleanup();
-        mWindow.cleanup();
-        mPlatform.cleanup();
+    void Engine::shutdown() {
+        mRenderer.waitBackend();
     }
 
     void Engine::run() {
@@ -37,8 +34,9 @@ namespace engine {
     }
 
     void Engine::update() {
-        mRenderer.update();
         mGui.prepareWindows();
+
+        mRenderer.update();
     }
 
     void Engine::draw() {

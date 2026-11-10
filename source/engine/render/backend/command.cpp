@@ -24,9 +24,16 @@ namespace backend {
     }
 
     void Command::pipelineBarrier(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const {
+        // Aspect
+        vk::ImageAspectFlags aspect = vk::ImageAspectFlagBits::eColor;
+
+        if (newLayout == vk::ImageLayout::eDepthAttachmentOptimal) {
+            aspect = vk::ImageAspectFlagBits::eDepth;
+        }
+
         // Subresource
         const vk::ImageSubresourceRange subresource{
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .aspectMask = aspect,
             .levelCount = 1,
             .layerCount = 1
         };
@@ -51,34 +58,37 @@ namespace backend {
     }
 
     void Command::beginRendering(vk::Extent2D extent, vk::AttachmentLoadOp loadOp, const vk::raii::ImageView& colorView, const vk::raii::ImageView& depthView) const {
-        std::vector<vk::RenderingAttachmentInfo> attachments;
+        vk::ClearValue clearValue = vk::ClearColorValue{ 0, 0, 0, 1 };
 
         // Color attachment
         const vk::RenderingAttachmentInfo colorAttachment{
             .imageView = *colorView,
             .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-            .loadOp = loadOp
+            .loadOp = loadOp,
+            .clearValue = clearValue
         };
 
-        attachments.push_back(colorAttachment);
-
         // Depth attachment
+        vk::RenderingAttachmentInfo depthAttachment;
+
         if (depthView != nullptr) {
-            const vk::RenderingAttachmentInfo depthAttachment{
+            clearValue = vk::ClearDepthStencilValue{ 1, 0 };
+
+            depthAttachment = {
                 .imageView = *depthView,
                 .imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
-                .loadOp = loadOp
+                .loadOp = loadOp,
+                .clearValue = clearValue
             };
-
-            attachments.push_back(depthAttachment);
         }
 
         // Info
         const vk::RenderingInfo info{
             .renderArea = { .extent = extent },
             .layerCount = 1,
-            .colorAttachmentCount = static_cast<uint32_t>(attachments.size()),
-            .pColorAttachments = attachments.data()
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &colorAttachment,
+            .pDepthAttachment = &depthAttachment
         };
 
         mBuffer.beginRendering(info);

@@ -8,6 +8,14 @@
 #include <backends/imgui_impl_vulkan.h>
 
 namespace gui {
+    Gui::~Gui() {
+        // Backends
+        ImGui_ImplVulkan_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+
+        ImGui::DestroyContext();
+    }
+
     bool Gui::initialize(const render::Renderer& renderer) {
         mBackend = &renderer.getBackend();
 
@@ -28,9 +36,12 @@ namespace gui {
         }
 
         // Pipeline info
+        VkPipelineRenderingCreateInfoKHR renderingInfo = backend::Pipeline::cRenderingInfo;
+        renderingInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
+
         ImGui_ImplVulkan_PipelineInfo pipelineInfo{
             .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
-            .PipelineRenderingCreateInfo = backend::Pipeline::cRenderingInfo
+            .PipelineRenderingCreateInfo = renderingInfo
         };
 
         // Vulkan info
@@ -54,14 +65,6 @@ namespace gui {
         }
 
         return true;
-    }
-
-    void Gui::cleanup() {
-        // Backends
-        ImGui_ImplVulkan_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-
-        ImGui::DestroyContext();
     }
 
     void Gui::prepareWindows() const {

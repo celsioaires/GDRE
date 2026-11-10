@@ -21,7 +21,7 @@ namespace src {
         // Shutdown
         spdlog::info("Shutting down GDRE...");
 
-        mEngine.cleanup();
+        mEngine.shutdown();
 
         return true;
     }

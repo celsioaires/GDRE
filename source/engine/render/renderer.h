@@ -14,16 +14,17 @@ namespace render {
         Camera mCamera;
     public:
         bool initialize(const gui::Window& window);
-        void cleanup();
 
-        bool uploadMesh(const std::vector<backend::Vertex>& vertices);
+        bool uploadMesh(const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices);
 
         void update();
 
         void beginDraw();
         void endDraw();
 
-        void drawMeshes();
+        void drawMeshes() const;
+
+        void waitBackend() const;
 
         // Getters
         const backend::Backend& getBackend() const { return mBackend; };

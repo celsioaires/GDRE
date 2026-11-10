@@ -179,7 +179,9 @@ namespace backend {
 
         // Depth stencil info
         const vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{
-
+            .depthTestEnable = true,
+            .depthWriteEnable = true,
+            .depthCompareOp = vk::CompareOp::eLess
         };
 
         // Color blend attachment
@@ -207,6 +209,7 @@ namespace backend {
             .pViewportState = &viewportInfo,
             .pRasterizationState = &rasterizationInfo,
             .pMultisampleState = &multisampleInfo,
+            .pDepthStencilState = &depthStencilInfo,
             .pColorBlendState = &colorBlendInfo,
             .pDynamicState = &dynamicInfo,
             .layout = layout

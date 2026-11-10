@@ -55,11 +55,12 @@ namespace backend {
             return false;
         }
 
-        return true;
-    }
+        // Depth texture
+        if (!mDepthImage.initialize(mContext, eImageTypeDepth, mSwapchain.getExtent())) {
+            return false;
+        }
 
-    void Backend::cleanup() {
-        mContext.waitIdle();
+        return true;
     }
 
     void Backend::beginCommands() {
@@ -70,13 +71,15 @@ namespace backend {
             swapchainImage = mSwapchain.acquireImage(mContext.getAcquireSemaphore());
 
             if (swapchainImage == nullptr) {
-                // Recreate swapchain
                 mContext.waitIdle();
+
+                // Cleanup resources
+                mDepthImage.cleanup();
                 mSwapchain.cleanup();
 
-                if (!mSwapchain.initialize(mContext)) {
-                    spdlog::error("Failed to initialize swapchain");
-                }
+                // Initialize resources
+                mSwapchain.initialize(mContext);
+                mDepthImage.initialize(mContext, eImageTypeDepth, mSwapchain.getExtent());
 
                 beginCommands(); // Retry
             }
@@ -94,6 +97,9 @@ namespace backend {
 
         // Swapchain image barrier (undefined to color)
         mCommand.pipelineBarrier(swapchainImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+
+        // Depth image barrier (undefined to depth)
+        mCommand.pipelineBarrier(mDepthImage.getHandle(), vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentOptimal);
     }
 
     void Backend::endCommands() {
@@ -109,13 +115,15 @@ namespace backend {
 
             // Present swapchain
             if (!mContext.presentQueue(mSwapchain.getHandle(), mSwapchain.getImageIndex())) {
-                // Recreate swapchain
                 mContext.waitIdle();
+
+                // Cleanup resources
+                mDepthImage.cleanup();
                 mSwapchain.cleanup();
 
-                if (!mSwapchain.initialize(mContext)) {
-                    spdlog::error("Failed to initialize swapchain");
-                }
+                // Initialize resources
+                mSwapchain.initialize(mContext);
+                mDepthImage.initialize(mContext, eImageTypeDepth, mSwapchain.getExtent());
             }
         }
         catch (const vk::SystemError& error) {
@@ -133,26 +141,30 @@ namespace backend {
         }
     }
 
-    void Backend::beginRender(const DescriptorSet& descriptorSet) {
+    void Backend::beginRender(const DescriptorSet& matrixDescriptor) const {
         const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
         const vk::Extent2D swapchainExtent = mSwapchain.getExtent();
-
-        // Begin rendering
-        mCommand.beginRendering(swapchainExtent, vk::AttachmentLoadOp::eClear, mSwapchain.getCurrentView());
-
-        // Bind default pipeline
         const vk::PipelineBindPoint bindPoint = mDefaultPipeline.getBindPoint();
 
+        // Begin rendering
+        mCommand.beginRendering(
+            swapchainExtent,
+            vk::AttachmentLoadOp::eClear,
+            mSwapchain.getCurrentView(),
+            mDepthImage.getView()
+        );
+
+        // Bind default pipeline
         commandBuffer.bindPipeline(bindPoint, *mDefaultPipeline.getHandle());
 
         // Set render extent
         mCommand.setRenderExtent(swapchainExtent);
 
         // Bind descriptor sets
-        commandBuffer.bindDescriptorSets(bindPoint, *mDefaultPipeline.getLayout(), 0, *descriptorSet.getHandle(), {});
+        commandBuffer.bindDescriptorSets(bindPoint, *mDefaultPipeline.getLayout(), 0, *matrixDescriptor.getHandle(), {});
     }
 
-    void Backend::endRender() {
+    void Backend::endRender() const {
         // End rendering
         mCommand.getBuffer().endRendering();
     }
@@ -173,5 +185,28 @@ namespace backend {
 
         // Draw vertices
         commandBuffer.draw(count, 1, 0, 0);
+    }
+
+    void Backend::drawIndexedVertices(const PushConstantsData& pushConstants, const Buffer& buffer, uint32_t count) const {
+        const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
+
+        // Bind index buffer
+        commandBuffer.bindIndexBuffer(buffer.getHandle(), 0, vk::IndexType::eUint32);
+
+        // Push draw constants
+        commandBuffer.pushConstants(
+            *mDefaultPipeline.getLayout(),
+            mDrawPushConstants.stage,
+            0,
+            sizeof(PushConstantsData),
+            &pushConstants
+        );
+
+        // Draw indexed vertices
+        commandBuffer.drawIndexed(count, 1, 0, 0, 0);
+    }
+
+    void Backend::waitContext() const {
+        mContext.waitIdle();
     }
 }

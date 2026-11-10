@@ -5,6 +5,8 @@
 #include "command.h"
 #include "pipeline.h"
 #include "descriptor.h"
+#include "buffer.h"
+#include "image.h"
 #include "utils.h"
 
 namespace backend {
@@ -16,18 +18,21 @@ namespace backend {
         DescriptorLayout mDefaultDescriptorLayout;
         PushConstants mDrawPushConstants;
         Pipeline mDefaultPipeline;
+        Image mDepthImage;
     public:
         bool initialize(GLFWwindow* window);
-        void cleanup();
 
         void beginCommands();
         void endCommands();
         void waitCommands();
 
-        void beginRender(const DescriptorSet& descriptorSet);
-        void endRender();
+        void beginRender(const DescriptorSet& matrixDescriptor) const;
+        void endRender() const;
 
-        void drawVertices(const PushConstantsData& pushConstantsData, uint32_t count);
+        void drawVertices(const PushConstantsData& pushConstants, uint32_t count);
+        void drawIndexedVertices(const PushConstantsData& pushConstants, const Buffer& buffer, uint32_t count) const;
+
+        void waitContext() const;
 
         // Getters
         const Context& getContext() const { return mContext; }

@@ -2,7 +2,69 @@
 
 #include <spdlog/spdlog.h>
 
+#include <fastgltf/tools.hpp>
+
 namespace asset {
+    void Primitive::load(const fastgltf::Asset& asset, const fastgltf::Primitive& primitive) {
+        size_t initialVertex = mVertices.size();
+
+        // Position attribute
+        const auto positionAttribute = primitive.findAttribute("POSITION");
+
+        if (positionAttribute == primitive.attributes.end()) {
+            return;
+        }
+
+        // Position accesor
+        const fastgltf::Accessor& positionAccessor = asset.accessors[positionAttribute->accessorIndex];
+
+        const size_t vertexOffset = mVertices.size();
+
+        mVertices.resize(vertexOffset + positionAccessor.count);
+
+        // Position
+        fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(
+            asset,
+            positionAccessor,
+            [&](fastgltf::math::fvec3 position, size_t index) {
+                mVertices[initialVertex + index].setPosition(position);
+            }
+        );
+
+        // Color attribute
+        const auto colorAttribute = primitive.findAttribute("COLOR_0");
+
+        // Color
+        if (colorAttribute != primitive.attributes.end()) {
+            fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec4>(
+                asset,
+                asset.accessors[colorAttribute->accessorIndex],
+                [&](fastgltf::math::fvec4 color, size_t index) {
+                    mVertices[initialVertex + index].setColor(color);
+                }
+            );
+        }
+
+        // Indices
+        if (primitive.indicesAccessor.has_value()) {
+            const fastgltf::Accessor& indexAccessor = asset.accessors[*primitive.indicesAccessor];
+
+            fastgltf::iterateAccessorWithIndex<uint32_t>(asset, indexAccessor, [&](uint32_t index, size_t) {
+                mIndices.push_back(static_cast<uint32_t>(vertexOffset + index));
+            });
+        }
+    }
+
+    void Mesh::load(const fastgltf::Asset& asset, const fastgltf::Mesh& mesh) {
+        for (const fastgltf::Primitive& fprimitive : mesh.primitives) {
+            Primitive primitive;
+
+            primitive.load(asset, fprimitive);
+
+            mPrimitives.push_back(std::move(primitive));
+        }
+    }
+
     bool Gltf::load(const std::filesystem::path& path) {
         // File
         if (!std::filesystem::exists(path)) {

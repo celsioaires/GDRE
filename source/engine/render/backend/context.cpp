@@ -1,5 +1,6 @@
 #define GLFW_INCLUDE_VULKAN
 #define VMA_IMPLEMENTATION
+
 #include "context.h"
 
 #include <filesystem>

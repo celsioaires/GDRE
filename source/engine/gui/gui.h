@@ -11,8 +11,9 @@ namespace gui {
         Hierarchy mHierarchy;
         Inspector mInspector;
     public:
+        ~Gui();
+
         bool initialize(const render::Renderer& renderer);
-        void cleanup();
 
         void prepareWindows() const;
         void drawWindows() const;

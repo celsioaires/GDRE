@@ -15,14 +15,10 @@ namespace render {
         return true;
     }
 
-    void Renderer::cleanup() {
-        mBackend.cleanup();
-    }
-
-    bool Renderer::uploadMesh(const std::vector<backend::Vertex>& vertices) {
+    bool Renderer::uploadMesh(const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices) {
         Mesh mesh;
 
-        if (!mesh.initialize(mBackend, vertices)) {
+        if (!mesh.initialize(mBackend, vertices, indices)) {
             return false;
         }
 
@@ -51,19 +47,25 @@ namespace render {
         mBackend.endCommands();
     }
 
-    void Renderer::drawMeshes() {
+    void Renderer::drawMeshes() const {
         mBackend.beginRender(mCamera.getDescriptorSet());
 
-        for (Mesh& mesh : mMeshes) {
-            mBackend.drawVertices(
+        for (const Mesh& mesh : mMeshes) {
+            mBackend.drawIndexedVertices(
                 {
                     .vertexBuffer = mesh.getVertexBuffer().getAddress(),
                     .transformMatrix = mesh.getTransformMatrix()
                 },
-                mesh.getVertexCount()
+                mesh.getIndexBuffer(),
+                mesh.getIndexCount()
             );
         }
 
         mBackend.endRender();
     }
+
+    void Renderer::waitBackend() const {
+        mBackend.waitContext();
+    }
+
 }

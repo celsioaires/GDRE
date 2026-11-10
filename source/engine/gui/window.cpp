@@ -3,6 +3,10 @@
 #include <spdlog/spdlog.h>
 
 namespace gui {
+    Window::~Window() {
+        glfwDestroyWindow(mHandle);
+    }
+
     bool Window::initialize() {
         // Hints
         glfwWindowHint(GLFW_CLIENT_API, false); // Vulkan
@@ -21,10 +25,6 @@ namespace gui {
         glfwSetKeyCallback(mHandle, keyCallback);
 
         return true;
-    }
-
-    void Window::cleanup() {
-        glfwDestroyWindow(mHandle);
     }
 
     bool Window::isOpen() const {

@@ -60,7 +60,6 @@ add_executable(GDRE
     # engine asset
     source/engine/asset/gltf.cpp
     source/engine/asset/loader.cpp
-    source/engine/asset/mesh.cpp
     # engine core
     source/engine/core/platform.cpp
     source/engine/core/time.cpp
@@ -75,6 +74,7 @@ add_executable(GDRE
     source/engine/render/backend/command.cpp
     source/engine/render/backend/context.cpp
     source/engine/render/backend/descriptor.cpp
+    source/engine/render/backend/image.cpp
     source/engine/render/backend/pipeline.cpp
     source/engine/render/backend/swapchain.cpp
     source/engine/render/camera.cpp
