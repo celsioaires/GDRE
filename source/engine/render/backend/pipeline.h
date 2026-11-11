@@ -6,10 +6,10 @@
 
 namespace backend {
     class Pipeline {
-        static inline const Context* sContext;
         static inline const std::string cShadersDirectory = GDRE_SHADERS_DIRECTORY;
 
         // Objects
+        const Context* mContext;
         std::vector<vk::raii::ShaderModule> mShaders;
         vk::raii::PipelineLayout mLayout = nullptr;
         vk::raii::Pipeline mHandle = nullptr;
@@ -29,9 +29,9 @@ namespace backend {
         vk::PipelineBindPoint getBindPoint() const { return mBindPoint; }
     private:
         // Initializers
-        static std::vector<vk::raii::ShaderModule> initializeShaders(const std::vector<std::string>& files);
-        static vk::raii::PipelineLayout initializeLayout(const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<vk::PushConstantRange>& pushConstants);
-        static vk::raii::Pipeline initializeGraphicsPipeline(const std::vector<vk::raii::ShaderModule>& shaders, const vk::raii::PipelineLayout& layout);
-        static vk::raii::Pipeline initializeComputePipeline();
+        bool initializeShaders(const std::vector<std::string>& files);
+        bool initializeLayout(const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<vk::PushConstantRange>& pushConstants);
+        bool initializeGraphicsPipeline();
+        bool initializeComputePipeline();
     };
 }

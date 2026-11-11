@@ -78,10 +78,11 @@ add_executable(GDRE
     source/engine/render/backend/pipeline.cpp
     source/engine/render/backend/swapchain.cpp
     source/engine/render/camera.cpp
+    source/engine/render/material.cpp
     source/engine/render/mesh.cpp
     source/engine/render/renderer.cpp
     # engine scene
-    source/engine/scene/scene.cpp)
+    source/engine/scene/scene.cpp )
 
 # Defines
 target_compile_definitions(GDRE PRIVATE

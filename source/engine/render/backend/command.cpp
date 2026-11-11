@@ -4,19 +4,15 @@
 
 namespace backend {
     bool Command::initialize(const Context& context, uint32_t queueFamily) {
-        sContext = &context;
+        mContext = &context;
 
         // Pool
-        mPool = initializeCommandPool(queueFamily);
-
-        if (mPool == nullptr) {
+        if (!initializeCommandPool(queueFamily)) {
             return false;
         }
 
-        // Pool
-        mBuffer = initializeCommandBuffer(mPool);
-
-        if (mBuffer == nullptr) {
+        // Buffer
+        if (!initializeCommandBuffer()) {
             return false;
         }
 
@@ -110,49 +106,45 @@ namespace backend {
         mBuffer.setScissor(0, scissor);
     }
 
-    vk::raii::CommandPool Command::initializeCommandPool(uint32_t queueFamily) {
+    bool Command::initializeCommandPool(uint32_t queueFamily) {
         // Info
         const vk::CommandPoolCreateInfo createInfo{
             .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
             .queueFamilyIndex = queueFamily
         };
 
-        vk::raii::CommandPool handle = nullptr;
-
+        // Initialize
         try {
-            // Create pool
-            handle = vk::raii::CommandPool(sContext->getDevice(), createInfo);
+            mPool = vk::raii::CommandPool(mContext->getDevice(), createInfo);
             spdlog::info("Command pool created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create command pool: {}", error.what());
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 
-    vk::raii::CommandBuffer Command::initializeCommandBuffer(const vk::raii::CommandPool& pool) {
+    bool Command::initializeCommandBuffer() {
         // Info
         const vk::CommandBufferAllocateInfo allocateInfo{
-            .commandPool = pool,
+            .commandPool = mPool,
             .commandBufferCount = 1
         };
 
-        vk::raii::CommandBuffer handle = nullptr;
-
+        // Initialize
         try {
-            // Allocate buffer
-            handle = std::move(vk::raii::CommandBuffers(sContext->getDevice(), allocateInfo).front());
+            mBuffer = std::move(vk::raii::CommandBuffers(mContext->getDevice(), allocateInfo).front());
             spdlog::info("Command buffer allocated successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to allocate command buffer: {}", error.what());
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 }

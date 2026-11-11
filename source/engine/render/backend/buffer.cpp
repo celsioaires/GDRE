@@ -6,11 +6,11 @@
 
 namespace backend {
     Buffer::~Buffer() {
-        vmaDestroyBuffer(sContext->getAllocator(), mHandle, mAllocation);
+        vmaDestroyBuffer(mContext->getAllocator(), mHandle, mAllocation);
     }
 
     bool Buffer::initialize(const Context& context, BufferType type, vk::DeviceSize size, const void* data) {
-        sContext = &context;
+        mContext = &context;
         mSize = size;
 
         const VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
@@ -21,7 +21,7 @@ namespace backend {
         switch (type) {
             case eBufferTypeStaging: {
                 usage = vk::BufferUsageFlagBits::eTransferSrc;
-                mHandle = initializeBuffer(size, usage, mAllocation, memoryUsage);
+                initializeBuffer(usage, memoryUsage);
                 break;
             }
             case eBufferTypeVertex: {
@@ -29,17 +29,17 @@ namespace backend {
                     vk::BufferUsageFlagBits::eVertexBuffer |
                     vk::BufferUsageFlagBits::eShaderDeviceAddress;
 
-                mHandle = initializeBuffer(size, usage, mAllocation, memoryUsage);
+                initializeBuffer(usage, memoryUsage);
                 break;
             }
             case eBufferTypeIndex: {
                 usage = vk::BufferUsageFlagBits::eIndexBuffer;
-                mHandle = initializeBuffer(size, usage, mAllocation, memoryUsage);
+                initializeBuffer(usage, memoryUsage);
                 break;
             }
             case eBufferTypeUniform: {
                 usage = vk::BufferUsageFlagBits::eUniformBuffer;
-                mHandle = initializeBuffer(size, usage, mAllocation, memoryUsage);
+                initializeBuffer(usage, memoryUsage);
                 break;
             }
         }
@@ -55,7 +55,7 @@ namespace backend {
 
         // Get address
         if (type == eBufferTypeVertex) {
-            const vk::raii::Device& device = sContext->getDevice();
+            const vk::raii::Device& device = mContext->getDevice();
             const vk::BufferDeviceAddressInfo info{ .buffer = mHandle };
 
             mAddress = device.getBufferAddress(info);
@@ -65,13 +65,14 @@ namespace backend {
     }
 
     void Buffer::mapMemory(const void* data) const {
-        const VmaAllocator& allocator = sContext->getAllocator();
+        const VmaAllocator& allocator = mContext->getAllocator();
 
         void* mappedMemory;
 
         // Map
         if (vmaMapMemory(allocator, mAllocation, &mappedMemory) != VK_SUCCESS) {
             spdlog::error("Failed to map buffer memory");
+            return;
         }
 
         memcpy(mappedMemory, data, mSize);
@@ -79,25 +80,23 @@ namespace backend {
         vmaUnmapMemory(allocator, mAllocation);
     }
 
-    vk::Buffer Buffer::initializeBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, VmaAllocation& allocation, VmaMemoryUsage memoryUsage) {
+    bool Buffer::initializeBuffer(vk::BufferUsageFlags usage, VmaMemoryUsage memoryUsage) {
         // Allocation
         const VmaAllocationCreateInfo allocationInfo{ .usage = memoryUsage };
 
         // Info
         const vk::BufferCreateInfo info{
-            .size = size,
+            .size = mSize,
             .usage = usage,
         };
 
-        vk::Buffer handle;
-
-        // Create buffer
+        // Initialize
         VkResult result = vmaCreateBuffer(
-            sContext->getAllocator(),
+            mContext->getAllocator(),
             reinterpret_cast<const VkBufferCreateInfo*>(&info),
             &allocationInfo,
-            reinterpret_cast<VkBuffer*>(&handle),
-            &allocation,
+            reinterpret_cast<VkBuffer*>(&mHandle),
+            &mAllocation,
             nullptr
         );
 
@@ -116,11 +115,11 @@ namespace backend {
         if (result != VK_SUCCESS) {
             // Failed
             spdlog::error("Failed to create {} buffer: {}", std::tolower(type[0]), string_VkResult(result));
-            return nullptr;
+            return false;
         }
 
         spdlog::info("{} buffer created successfully", type);
 
-        return handle;
+        return true;
     }
 }

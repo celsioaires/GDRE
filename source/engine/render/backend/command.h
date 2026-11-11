@@ -5,8 +5,8 @@
 
 namespace backend {
     class Command {
-        static inline const Context* sContext;
-
+        // Objects
+        const Context* mContext;
         vk::raii::CommandPool mPool = nullptr;
         vk::raii::CommandBuffer mBuffer = nullptr;
     public:
@@ -20,7 +20,7 @@ namespace backend {
         const vk::raii::CommandBuffer& getBuffer() const { return mBuffer; }
     private:
         // Initializers
-        static vk::raii::CommandPool initializeCommandPool(uint32_t queueFamily);
-        static vk::raii::CommandBuffer initializeCommandBuffer(const vk::raii::CommandPool& pool);
+        bool initializeCommandPool(uint32_t queueFamily);
+        bool initializeCommandBuffer();
     };
 }

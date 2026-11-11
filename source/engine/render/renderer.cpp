@@ -18,13 +18,15 @@ namespace render {
     }
 
     bool Renderer::uploadMesh(const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices) {
-        Mesh mesh;
+        // Upload
+        mMeshes.emplace_back();
 
-        if (!mesh.initialize(mBackend, vertices, indices)) {
+        // Initialize
+        if (!mMeshes.back().initialize(mBackend, vertices, indices)) {
+            // Failed
+            mMeshes.pop_back();
             return false;
         }
-
-        mMeshes.push_back(std::move(mesh));
 
         return true;
     }

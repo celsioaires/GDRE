@@ -6,10 +6,12 @@
 
 namespace backend {
     bool Pipeline::initialize(const Context& context, PipelineType type, const std::vector<std::string>& shaderFiles, const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<PushConstants>& pushConstants) {
-        sContext = &context;
+        mContext = &context;
 
         // Shaders
-        mShaders = initializeShaders(shaderFiles);
+        if (!initializeShaders(shaderFiles)) {
+            return false;
+        }
 
         // Layout
         std::vector<vk::PushConstantRange> pushConstantRanges;
@@ -21,22 +23,20 @@ namespace backend {
             });
         }
 
-        mLayout = initializeLayout(descriptorLayout, pushConstantRanges);
-
-        if (mLayout == nullptr) {
+        if (!initializeLayout(descriptorLayout, pushConstantRanges)) {
             return false;
         }
 
         // Handle
         switch (type) {
             case ePipelineTypeGraphics: {
-                mHandle = initializeGraphicsPipeline(mShaders, mLayout);
                 mBindPoint = vk::PipelineBindPoint::eGraphics;
+                initializeGraphicsPipeline();
                 break;
             }
             case ePipelineTypeCompute: {
-                mHandle = initializeComputePipeline();
                 mBindPoint = vk::PipelineBindPoint::eCompute;
+                initializeComputePipeline();
                 break;
             }
         }
@@ -48,9 +48,7 @@ namespace backend {
         return true;
     }
 
-    std::vector<vk::raii::ShaderModule> Pipeline::initializeShaders(const std::vector<std::string> &files) {
-        std::vector<vk::raii::ShaderModule> shaders;
-
+    bool Pipeline::initializeShaders(const std::vector<std::string> &files) {
         for (const std::string& file : files) {
             // Open stream
             std::ifstream stream(cShadersDirectory + file, std::ios::ate | std::ios::binary);
@@ -58,7 +56,7 @@ namespace backend {
             if (!stream.is_open()) {
                 // Failed
                 spdlog::error("Failed to open shader: {}", file);
-                return shaders;
+                return false;
             }
 
             // Code
@@ -75,24 +73,24 @@ namespace backend {
 
             vk::raii::ShaderModule shader = nullptr;
 
+            // Initialize
             try {
-                // Create shader
-                shader = vk::raii::ShaderModule(sContext->getDevice(), createInfo);
+                shader = vk::raii::ShaderModule(mContext->getDevice(), createInfo);
                 spdlog::info("Shader created successfully: {}", file);
             }
             catch (const vk::SystemError& error) {
                 // Failed
                 spdlog::error("Failed to create shader: {}\n{}", file, error.what());
-                return shaders;
+                return false;
             }
 
-            shaders.push_back(std::move(shader));
+            mShaders.push_back(std::move(shader));
         }
 
-        return shaders;
+        return true;
     }
 
-    vk::raii::PipelineLayout Pipeline::initializeLayout(const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<vk::PushConstantRange>& pushConstants) {
+    bool Pipeline::initializeLayout(const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<vk::PushConstantRange>& pushConstants) {
         // Info
         const vk::PipelineLayoutCreateInfo info{
             .setLayoutCount = 1,
@@ -101,30 +99,28 @@ namespace backend {
             .pPushConstantRanges = pushConstants.data()
         };
 
-        vk::raii::PipelineLayout handle = nullptr;
-
+        // Initialize
         try {
-            // Create layout
-            handle = vk::raii::PipelineLayout(sContext->getDevice(), info);
+            mLayout = vk::raii::PipelineLayout(mContext->getDevice(), info);
             spdlog::info("Pipeline layout created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create pipeline layout: {}", error.what());
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 
-    vk::raii::Pipeline Pipeline::initializeGraphicsPipeline(const std::vector<vk::raii::ShaderModule>& shaders, const vk::raii::PipelineLayout& layout) {
+    bool Pipeline::initializeGraphicsPipeline() {
         // Stage infos
         std::vector<vk::PipelineShaderStageCreateInfo> stages;
 
         // Vertex stage info
         const vk::PipelineShaderStageCreateInfo vertexStage{
             .stage = vk::ShaderStageFlagBits::eVertex,
-            .module = shaders[0],
+            .module = mShaders[0],
             .pName = "vertexMain"
         };
 
@@ -133,7 +129,7 @@ namespace backend {
         // fragment stage info
         const vk::PipelineShaderStageCreateInfo fragmentStage{
             .stage = vk::ShaderStageFlagBits::eFragment,
-            .module = shaders[0],
+            .module = mShaders[0],
             .pName = "fragmentMain"
         };
 
@@ -212,7 +208,7 @@ namespace backend {
             .pDepthStencilState = &depthStencilInfo,
             .pColorBlendState = &colorBlendInfo,
             .pDynamicState = &dynamicInfo,
-            .layout = layout
+            .layout = mLayout
         };
 
         // Chain
@@ -224,24 +220,21 @@ namespace backend {
             cRenderingInfo
         };
 
-        vk::raii::Pipeline handle = nullptr;
-
+        // Initialize
         try {
-            // Create pipeline
-            handle = vk::raii::Pipeline(sContext->getDevice(), nullptr, chain.get<vk::GraphicsPipelineCreateInfo>());
+            mHandle = vk::raii::Pipeline(mContext->getDevice(), nullptr, chain.get<vk::GraphicsPipelineCreateInfo>());
             spdlog::info("Pipeline created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create pipeline: {}", error.what());
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 
-    vk::raii::Pipeline Pipeline::initializeComputePipeline() {
-        vk::raii::Pipeline handle = nullptr;
+    bool Pipeline::initializeComputePipeline() {
 
         try {
             // Create pipeline
@@ -251,9 +244,9 @@ namespace backend {
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create pipeline: {}", error.what());
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 }

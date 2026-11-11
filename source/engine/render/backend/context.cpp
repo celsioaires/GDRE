@@ -15,21 +15,21 @@ namespace backend {
     }
 
     bool Context::initialize(GLFWwindow* window) {
+        // Objects
         mWindow = window;
 
-        // Objects
         if (
-            (mInstance = initializeInstance(mHandle)) == nullptr ||
+            !initializeInstance() ||
 #if !defined (NDEBUG)
-            (mDebugMessenger = initializeDebugMessenger(mInstance)) == nullptr ||
+            !initializeDebugMessenger() ||
 #endif
-            (mSurface = initializeSurface(mInstance, window)) == nullptr ||
-            (mPhysicalDevice = initializePhysicalDevice(mInstance, mSurface, mGraphicsFamily)) == nullptr ||
-            (mDevice = initializeDevice(mPhysicalDevice, mGraphicsQueue, mGraphicsFamily)) == nullptr ||
-            (mAllocator = initializeAllocator(mDevice, mPhysicalDevice, mInstance)) == nullptr ||
-            (mSubmitFence = initializeFence(mDevice)) == nullptr ||
-            (mAcquireSemaphore = initializeSemaphore(mDevice)) == nullptr ||
-            (mSubmitSemaphore = initializeSemaphore(mDevice)) == nullptr
+            !initializeSurface() ||
+            !initializePhysicalDevice() ||
+            !initializeDevice() ||
+            !initializeAllocator() ||
+            !initializeFence() ||
+            !initializeSemaphore(mAcquireSemaphore) ||
+            !initializeSemaphore(mSubmitSemaphore)
         ) {
             return false;
         }
@@ -98,7 +98,7 @@ namespace backend {
         }
     }
 
-    vk::raii::Instance Context::initializeInstance(const vk::raii::Context& context) {
+    bool Context::initializeInstance() {
         // Application info
         const char* applicationName = "GDRE";
         uint32_t applicationVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -140,23 +140,21 @@ namespace backend {
             .ppEnabledExtensionNames = extensions.data()
         };
 
-        vk::raii::Instance handle = nullptr;
-
+        // Initialize
         try {
-            // Create instance
-            handle = vk::raii::Instance(context, info);
+            mInstance = vk::raii::Instance(mHandle, info);
             spdlog::info("Instance created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create instance: {}", error.what());
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 
-    vk::raii::DebugUtilsMessengerEXT Context::initializeDebugMessenger(const vk::raii::Instance& instance) {
+    bool Context::initializeDebugMessenger() {
         // Info
         const vk::DebugUtilsMessengerCreateInfoEXT createInfo{
             .messageSeverity =
@@ -169,52 +167,46 @@ namespace backend {
             .pfnUserCallback = debugCallback
         };
 
-        vk::raii::DebugUtilsMessengerEXT handle = nullptr;
-
+        // Initialize
         try {
-            // Create debug messenger
-            handle = vk::raii::DebugUtilsMessengerEXT(instance, createInfo);
+            mDebugMessenger = vk::raii::DebugUtilsMessengerEXT(mInstance, createInfo);
             spdlog::info("Debug messenger created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create debug messenger: {}", error.what());
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 
-    vk::raii::SurfaceKHR Context::initializeSurface(const vk::raii::Instance& instance, GLFWwindow* window) {
+    bool Context::initializeSurface() {
         // Surface
         VkSurfaceKHR surface;
 
-        if (glfwCreateWindowSurface(*instance, window, nullptr, &surface) != VK_SUCCESS) {
+        if (glfwCreateWindowSurface(*mInstance, mWindow, nullptr, &surface) != VK_SUCCESS) {
             spdlog::error("Failed to create surface");
-            return nullptr;
+            return false;
         }
 
-        vk::raii::SurfaceKHR handle = nullptr;
-
+        // Initialize
         try {
-            // Create surface
-            handle = vk::raii::SurfaceKHR(instance, surface);
+            mSurface = vk::raii::SurfaceKHR(mInstance, surface);
             spdlog::info("Surface created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create surface: {}", error.what());
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 
-    vk::raii::PhysicalDevice Context::initializePhysicalDevice(const vk::raii::Instance &instance, const vk::raii::SurfaceKHR& surface, uint32_t& graphicsFamily) {
-        vk::raii::PhysicalDevice handle = nullptr;
-
+    bool Context::initializePhysicalDevice() {
         // Physical devices
-        const std::vector<vk::raii::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
+        const std::vector<vk::raii::PhysicalDevice> devices = mInstance.enumeratePhysicalDevices();
 
         // Iterate
         for (const vk::raii::PhysicalDevice& device : devices) {
@@ -264,38 +256,38 @@ namespace backend {
             for (const vk::QueueFamilyProperties& queueFamily : queueFamilies) {
                 if (
                     queueFamily.queueFlags & vk::QueueFlagBits::eGraphics &&
-                    device.getSurfaceSupportKHR(i, *surface) // ¿Surface present support?
+                    device.getSurfaceSupportKHR(i, *mSurface) // ¿Surface present support?
                 ) {
                     graphicsQueueSupport = true;
-                    graphicsFamily = i;
+                    mGraphicsFamily = i;
                 }
 
                 i++;
             }
 
-            // ¿Support?
             if (vulkan14Support && featuresSupport && swapchainSupport && graphicsQueueSupport) {
-                handle = device;
+                // Support
+                mPhysicalDevice = device;
                 spdlog::info("Physical device selected successfully");
                 break;
             }
         }
 
-        // ¿Failed?
-        if (handle == nullptr) {
+        if (mPhysicalDevice == nullptr) {
+            // Failed
             spdlog::error("Failed to select physical device");
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 
-    vk::raii::Device Context::initializeDevice(const vk::raii::PhysicalDevice& physicalDevice, vk::raii::Queue& queue, uint32_t queueFamily) {
+    bool Context::initializeDevice() {
         // Queue
         const float queuePriority = 0.5f;
 
         const vk::DeviceQueueCreateInfo queueInfo{
-            .queueFamilyIndex = queueFamily,
+            .queueFamilyIndex = mGraphicsFamily,
             .queueCount = 1,
             .pQueuePriorities = &queuePriority
         };
@@ -340,86 +332,80 @@ namespace backend {
             features13
         };
 
-        vk::raii::Device handle = nullptr;
-
+        // Initialize
         try {
-            // Create device
-            handle = vk::raii::Device(physicalDevice, chain.get<vk::DeviceCreateInfo>());
+            // Device
+            mDevice = vk::raii::Device(mPhysicalDevice, chain.get<vk::DeviceCreateInfo>());
             spdlog::info("Device created successfully");
 
-            // Retrieve queue
-            queue = vk::raii::Queue(handle, queueFamily, 0);
+            // Graphics queue
+            mGraphicsQueue = vk::raii::Queue(mDevice, mGraphicsFamily, 0);
             spdlog::info("Retrieved queue successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create device: {}", error.what());
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 
-    VmaAllocator Context::initializeAllocator(const vk::raii::Device& device, const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Instance& instance) {
+    bool Context::initializeAllocator() {
         // Info
         VmaAllocatorCreateInfo info{
             .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
-            .physicalDevice = *physicalDevice,
-            .device = *device,
-            .instance = *instance
+            .physicalDevice = *mPhysicalDevice,
+            .device = *mDevice,
+            .instance = *mInstance
         };
 
-        // Handle
-        VmaAllocator allocator;
-
-        if (vmaCreateAllocator(&info, &allocator) != VK_SUCCESS) {
+        // Initialize
+        if (vmaCreateAllocator(&info, &mAllocator) != VK_SUCCESS) {
+            // Failed
             spdlog::error("Failed to create allocator");
-            return nullptr;
+            return false;
         }
 
-        return allocator;
+        return true;
     }
 
-    vk::raii::Fence Context::initializeFence(const vk::raii::Device& device) {
+    bool Context::initializeFence() {
         // Info
         const vk::FenceCreateInfo createInfo{
             .flags = vk::FenceCreateFlags::BitsType::eSignaled
         };
 
-        vk::raii::Fence handle = nullptr;
-
+        // Initialize
         try {
-            // Create fence
-            handle = vk::raii::Fence(device, createInfo);
+            mSubmitFence = vk::raii::Fence(mDevice, createInfo);
             spdlog::info("Fence created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create fence: {}", error.what());
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 
-    vk::raii::Semaphore Context::initializeSemaphore(const vk::raii::Device& device) {
+    bool Context::initializeSemaphore(vk::raii::Semaphore& semaphore) {
         // Info
         const vk::SemaphoreCreateInfo info{};
 
-        vk::raii::Semaphore handle = nullptr;
-
+        // Initialize
         try {
-            // Create semaphore
-            handle = vk::raii::Semaphore(device, info);
+            semaphore = vk::raii::Semaphore(mDevice, info);
             spdlog::info("Semaphore created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create semaphore: {}", error.what());
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 
     VKAPI_ATTR vk::Bool32 VKAPI_CALL Context::debugCallback(

@@ -33,7 +33,9 @@ namespace scene {
                     }
 
                     // Upload mesh
-                    renderer.uploadMesh(backendVertices, primitive.getIndices());
+                    if (!renderer.uploadMesh(backendVertices, primitive.getIndices())) {
+                        return false;
+                    }
                 }
             }
         }

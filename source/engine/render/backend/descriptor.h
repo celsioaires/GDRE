@@ -4,6 +4,7 @@
 
 namespace backend {
     class DescriptorLayout {
+        const Context* mContext;
         vk::raii::DescriptorSetLayout mHandle = nullptr;
     public:
         bool initialize(const Context& context, const std::vector<vk::DescriptorSetLayoutBinding>& bindings);
@@ -11,13 +12,12 @@ namespace backend {
         // Getters
         const vk::raii::DescriptorSetLayout& getHandle() const { return mHandle; }
     private:
-        static inline const Context* sContext;
-
         // Initializers
-        static vk::raii::DescriptorSetLayout initializeDescriptorLayout(const std::vector<vk::DescriptorSetLayoutBinding>& bindings);
+        bool initializeDescriptorLayout(const std::vector<vk::DescriptorSetLayoutBinding>& bindings);
     };
 
     class DescriptorSet {
+        const Context* mContext;
         vk::raii::DescriptorSet mHandle = nullptr;
     public:
         bool initialize(const Context& context, const vk::raii::DescriptorPool& pool, const vk::raii::DescriptorSetLayout& layout);
@@ -27,24 +27,20 @@ namespace backend {
         // Getters
         const vk::raii::DescriptorSet& getHandle() const { return mHandle; }
     private:
-        static inline const Context* sContext;
-
         // Initializers
-        static vk::raii::DescriptorSet initializeDescriptorSet(const vk::raii::DescriptorPool& pool, const vk::raii::DescriptorSetLayout& layout);
+        bool initializeDescriptorSet(const vk::raii::DescriptorPool& pool, const vk::raii::DescriptorSetLayout& layout);
     };
 
     class Descriptor {
+        const Context* mContext;
         vk::raii::DescriptorPool mPool = nullptr;
-        std::vector<vk::raii::DescriptorSet> mSets;
     public:
         bool initialize(const Context& context, const std::vector<vk::DescriptorPoolSize>& poolSizes);
 
         // Getters
         const vk::raii::DescriptorPool& getPool() const { return mPool; }
     private:
-        static inline const Context* sContext;
-
         // Initializers
-        static vk::raii::DescriptorPool initializeDescriptorPool(const std::vector<vk::DescriptorPoolSize>& sizes);
+        bool initializeDescriptorPool(const std::vector<vk::DescriptorPoolSize>& sizes);
     };
 }

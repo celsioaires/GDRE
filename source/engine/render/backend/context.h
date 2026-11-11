@@ -12,9 +12,8 @@
 
 namespace backend {
     class Context {
-        GLFWwindow* mWindow;
-
         // Objects
+        GLFWwindow* mWindow;
         vk::raii::Context mHandle;
         vk::raii::Instance mInstance = nullptr;
         vk::raii::DebugUtilsMessengerEXT mDebugMessenger = nullptr;
@@ -53,14 +52,15 @@ namespace backend {
         const vk::raii::Semaphore& getSubmitSemaphore() const { return mSubmitSemaphore; }
     private:
         // Initializers
-        static vk::raii::Instance initializeInstance(const vk::raii::Context& context);
-        static vk::raii::DebugUtilsMessengerEXT initializeDebugMessenger(const vk::raii::Instance& instance);
-        static vk::raii::SurfaceKHR initializeSurface(const vk::raii::Instance& instance, GLFWwindow* window);
-        static vk::raii::PhysicalDevice initializePhysicalDevice(const vk::raii::Instance& instance, const vk::raii::SurfaceKHR& surface, uint32_t& graphicsFamily);
-        static vk::raii::Device initializeDevice(const vk::raii::PhysicalDevice& physicalDevice, vk::raii::Queue& queue, uint32_t queueFamily);
-        static VmaAllocator initializeAllocator(const vk::raii::Device& device, const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Instance& instance);
-        static vk::raii::Fence initializeFence(const vk::raii::Device& device);
-        static vk::raii::Semaphore initializeSemaphore(const vk::raii::Device& device);
+        bool initializeInstance();
+        bool initializeDebugMessenger();
+        bool initializeSurface();
+        bool initializePhysicalDevice();
+        bool initializeDevice();
+        bool initializeAllocator();
+        bool initializeFence();
+        bool initializeSemaphore(vk::raii::Semaphore& semaphore);
+
 
         // Callback
         static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(

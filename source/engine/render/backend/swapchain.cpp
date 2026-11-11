@@ -6,11 +6,11 @@
 
 namespace backend {
     bool Swapchain::initialize(const Context& context) {
-        sContext = &context;
+        mContext = &context;
 
         // Window size
         int windowWidth, windowHeight;
-        glfwGetWindowSize(sContext->getWindow(), &windowWidth, &windowHeight);
+        glfwGetWindowSize(mContext->getWindow(), &windowWidth, &windowHeight);
 
         // Extent
         mExtent = vk::Extent2D{
@@ -19,29 +19,25 @@ namespace backend {
         };
 
         // Handle
-        mHandle = initializeSwapchain(mExtent);
-
-        if (mHandle == nullptr) {
+        if (!initializeSwapchain()) {
             return false;
         }
 
         // Images
-        mImages = initializeImages(mHandle);
-
-        // Views
-        mViews = initializeViews(mImages);
-
-        if (mViews.back() == nullptr) {
+        if (!initializeImages()) {
             return false;
         }
 
-        spdlog::info("Swapchain views created successfully");
+        // Views
+        if (!initializeViews()) {
+            return false;
+        }
 
         return true;
     }
 
     void Swapchain::cleanup() {
-        sContext = nullptr;
+        mContext = nullptr;
         mViews.clear();
         mHandle = nullptr;
         mImages.clear();
@@ -75,54 +71,54 @@ namespace backend {
         return mImages[mImageIndex];
     }
 
-    vk::raii::SwapchainKHR Swapchain::initializeSwapchain(const vk::Extent2D& extent) {
+    bool Swapchain::initializeSwapchain() {
         // Surface
-        const vk::raii::SurfaceKHR& surface = sContext->getSurface();
+        const vk::raii::SurfaceKHR& surface = mContext->getSurface();
 
         // Info
         const vk::SwapchainCreateInfoKHR createInfo{
             .surface = *surface,
             .minImageCount = 3,
             .imageFormat = cImageFormat,
-            .imageExtent = extent,
+            .imageExtent = mExtent,
             .imageArrayLayers = 1,
             .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
+            .presentMode = vk::PresentModeKHR::eFifo,
             .clipped = true
         };
 
         vk::raii::SwapchainKHR handle = nullptr;
 
+        // Initialize
         try {
-            // Create swapchain
-            handle = vk::raii::SwapchainKHR(sContext->getDevice(), createInfo);
+            mHandle = vk::raii::SwapchainKHR(mContext->getDevice(), createInfo);
             spdlog::info("Swapchain created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to create swapchain: {}", error.what());
-            return nullptr;
+            return false;
         }
 
-        return handle;
+        return true;
     }
 
-    std::vector<vk::Image> Swapchain::initializeImages(const vk::raii::SwapchainKHR& swapchain) {
-        std::vector<vk::Image> images;
-
+    bool Swapchain::initializeImages() {
+        // Initialize
         try {
-            images = swapchain.getImages();
+            mImages = mHandle.getImages();
             spdlog::info("Swapchain images retrieved successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to retrieve swapchain images: {}", error.what());
-            return images;
+            return false;
         }
 
-        return images;
+        return true;
     }
 
-    std::vector<vk::raii::ImageView> Swapchain::initializeViews(const std::vector<vk::Image>& images) {
+    bool Swapchain::initializeViews() {
         // Subresource
         const vk::ImageSubresourceRange subresource{
             .aspectMask = vk::ImageAspectFlagBits::eColor,
@@ -137,28 +133,23 @@ namespace backend {
             .subresourceRange = subresource
         };
 
-        std::vector<vk::raii::ImageView> views;
-
-        for (vk::Image image : images) {
+        // Views
+        for (const vk::Image& image : mImages) {
             info.image = image;
 
-            vk::raii::ImageView view = nullptr;
-
+            // Initialize
             try {
-                // Create view
-                view = vk::raii::ImageView(sContext->getDevice(), info);
+                mViews.emplace_back(mContext->getDevice(), info);
             }
             catch (const vk::SystemError& error) {
                 // Failed
                 spdlog::error("Failed to create view: {}", error.what());
-                views.push_back(std::move(view));
-
-                return views;
+                return false;
             }
-
-            views.push_back(std::move(view));
         }
 
-        return views;
+        spdlog::info("Swapchain views created successfully");
+
+        return true;
     }
 }
