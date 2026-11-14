@@ -12,9 +12,7 @@ namespace render {
         backend::Buffer mVertexBuffer;
         backend::Buffer mIndexBuffer;
     public:
-        bool initialize(const backend::Backend& backend, const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices);
-
-        void updateTransform();
+        bool initialize(const backend::Backend& backend, const glm::mat4& transformMatrix, const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices);
 
         // Getters
         glm::mat4 getTransformMatrix() const { return mTransformMatrix; }

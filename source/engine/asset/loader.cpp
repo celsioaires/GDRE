@@ -3,7 +3,7 @@
 
 namespace asset {
     bool Loader::initialize() {
-        if (!loadGltf(cAssetsDirectory + "gltf/default.glb")) {
+        if (!loadGltf(cAssetsDirectory + "gltf/oil_drum.glb")) {
             return false;
         }
 

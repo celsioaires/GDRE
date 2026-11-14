@@ -4,8 +4,9 @@
 
 #include "backend/backend.h"
 
-#include "camera.h"
 #include "mesh.h"
+#include "material.h"
+#include "camera.h"
 
 namespace render {
     class Renderer {
@@ -13,11 +14,13 @@ namespace render {
         const core::Platform* mPlatform;
         backend::Backend mBackend;
         std::vector<Mesh> mMeshes;
+        std::vector<Material> mMaterials;
         Camera mCamera;
     public:
         bool initialize(const core::Platform& platform);
 
-        bool uploadMesh(const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices);
+        bool uploadMesh(const glm::mat4& transformMatrix, const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices);
+        bool uploadMaterial();
 
         void updateScene();
 

@@ -58,7 +58,7 @@ namespace asset {
                 }
             );
         }
-        
+
         // Color attribute
         const auto colorAttribute = primitive.findAttribute("COLOR_0");
 
@@ -71,6 +71,11 @@ namespace asset {
                     mVertices[initialVertex + index].setColor(color);
                 }
             );
+        }
+        else {
+            for (size_t i = 0; i < mVertices.size(); i++) {
+                mVertices[initialVertex + i].setColor({ 1.0f, 0.5f, 0.0f, 1.0f });
+            }
         }
 
         // Indices
@@ -92,6 +97,36 @@ namespace asset {
             primitive.load(asset, fprimitive);
 
             mPrimitives.push_back(std::move(primitive));
+        }
+    }
+
+    void Material::load(const fastgltf::Asset& asset, const fastgltf::Material& material) {
+
+    }
+
+    void Node::load(const fastgltf::Asset& asset, const fastgltf::Node& node, const std::vector<Mesh>& meshes) {
+        mName = node.name;
+        mLocalTransform = fastgltf::getLocalTransformMatrix(node);
+
+        spdlog::info(
+            "Node: {} | Position: {}, {}, {}",
+            node.name,
+            mLocalTransform[3].x(),
+            mLocalTransform[3].y(),
+            mLocalTransform[3].z()
+        );
+
+        // Mesh
+        if (node.meshIndex.has_value()) {
+            mMesh = &meshes[*node.meshIndex];
+        }
+
+        // Childrens
+        mChildrens.resize(node.children.size());
+
+        for (size_t childrenIndex : node.children) {
+            Node& children = mChildrens[childrenIndex];
+            children.load(asset, asset.nodes[childrenIndex], meshes);
         }
     }
 
@@ -128,18 +163,42 @@ namespace asset {
         // Asset
         mAsset = std::move(asset.get());
 
+        loadData();
+
+        return true;
+    }
+
+    void Gltf::loadData() {
+        int i;
+
         // Meshes
         mMeshes.resize(mAsset.meshes.size());
 
-        int i = 0;
+        i = 0;
 
         for (Mesh& mesh : mMeshes) {
             mesh.load(mAsset, mAsset.meshes[i]);
             i++;
         }
 
-        // Materials
+        // Nodes
+        mNodes.resize(mAsset.nodes.size());
 
-        return true;
+        i = 0;
+
+        for (Node& node : mNodes) {
+            node.load(mAsset, mAsset.nodes[i], mMeshes);
+            i++;
+        }
+
+        // Materials
+        mMaterials.resize(mAsset.materials.size());
+
+        i = 0;
+
+        for (Material& material : mMaterials) {
+            material.load(mAsset, mAsset.materials[i]);
+            i++;
+        }
     }
 }

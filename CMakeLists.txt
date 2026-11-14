@@ -67,7 +67,7 @@ add_executable(GDRE
     source/engine/gui/gui.cpp
     source/engine/gui/hierarchy.cpp
     source/engine/gui/inspector.cpp
-        source/engine/core/window.cpp
+    source/engine/core/window.cpp
     # engine render
     source/engine/render/backend/backend.cpp
     source/engine/render/backend/buffer.cpp
@@ -82,7 +82,7 @@ add_executable(GDRE
     source/engine/render/mesh.cpp
     source/engine/render/renderer.cpp
     # engine scene
-    source/engine/scene/scene.cpp )
+    source/engine/scene/scene.cpp)
 
 # Defines
 target_compile_definitions(GDRE PRIVATE

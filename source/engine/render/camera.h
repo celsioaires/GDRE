@@ -1,7 +1,6 @@
 #pragma once
 
 #include "backend/backend.h"
-#include "backend/buffer.h"
 
 namespace render {
     struct CameraData {

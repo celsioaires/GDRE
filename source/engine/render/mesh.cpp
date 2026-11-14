@@ -3,9 +3,8 @@
 #include "glm/ext/matrix_transform.hpp"
 
 namespace render {
-    bool Mesh::initialize(const backend::Backend& backend, const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices) {
-        mTransformMatrix = glm::mat4(1);
-
+    bool Mesh::initialize(const backend::Backend& backend, const glm::mat4& transformMatrix, const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices) {
+        mTransformMatrix = transformMatrix;
         mVertexCount = vertices.size();
         mIndexCount = static_cast<uint32_t>(indices.size());
 
@@ -30,9 +29,5 @@ namespace render {
         }
 
         return true;
-    }
-
-    void Mesh::updateTransform() {
-        mTransformMatrix = glm::rotate(glm::mat4(1), static_cast<float>(glfwGetTime()), { 0, 1, 0 });
     }
 }

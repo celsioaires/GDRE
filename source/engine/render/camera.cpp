@@ -10,7 +10,7 @@ namespace render {
 
         // Descriptor set
         const backend::Descriptor& descriptor = mBackend->getDefaultDescriptor();
-        const backend::DescriptorLayout& descriptorLayout = mBackend->getDefaultDescriptorLayout();
+        const backend::DescriptorLayout& descriptorLayout = mBackend->getCameraDescriptorLayout();
 
         if (!mDescriptorSet.initialize(
             context,
@@ -42,7 +42,7 @@ namespace render {
 
         // Data
         mData = {
-            .viewMatrix = glm::lookAt(glm::vec3(0, 0, 2.5), glm::vec3(0), glm::vec3(0, 1, 0)),
+            .viewMatrix = glm::lookAt(glm::vec3(0, 0, 10), glm::vec3(0), glm::vec3(0, 1, 0)),
             .projectionMatrix = glm::perspective(
                 glm::radians(70.0f), static_cast<float>(windowWidth) / windowHeight, 0.1f, 1000.0f
             )

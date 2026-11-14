@@ -104,7 +104,7 @@ namespace backend {
         // Info
         const vk::DescriptorPoolCreateInfo info{
             .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-            .maxSets = 1,
+            .maxSets = 10,
             .poolSizeCount = static_cast<uint32_t>(sizes.size()),
             .pPoolSizes = sizes.data()
         };

@@ -18,23 +18,38 @@ namespace backend {
         // Default descriptor
         if (!mDefaultDescriptor.initialize(
             mContext, {
-                { .type = vk::DescriptorType::eUniformBuffer, .descriptorCount = 1 }
+                { .type = vk::DescriptorType::eUniformBuffer, .descriptorCount = 10 },
+                { .type = vk::DescriptorType::eSampler, .descriptorCount = 10 }
             }
         )) {
             return false;
         }
 
-        // Default descriptor layout
-        if (!mDefaultDescriptorLayout.initialize(
-            mContext, {
-                {
-                    .binding = 0,
-                    .descriptorType = vk::DescriptorType::eUniformBuffer,
-                    .descriptorCount = 1,
-                    .stageFlags = vk::ShaderStageFlagBits::eVertex
+        // Descriptor layouts
+        if (
+            // Camera
+            !mCameraDescriptorLayout.initialize(
+                mContext, {
+                    {
+                        .binding = 0,
+                        .descriptorType = vk::DescriptorType::eUniformBuffer,
+                        .descriptorCount = 1,
+                        .stageFlags = vk::ShaderStageFlagBits::eVertex
+                    }
                 }
-            }
-        )) {
+            ) ||
+            // Material
+            !mMaterialDescriptorLayout.initialize(
+                mContext, {
+                    {
+                        .binding = 0,
+                        .descriptorType = vk::DescriptorType::eSampler,
+                        .descriptorCount = 1,
+                        .stageFlags = vk::ShaderStageFlagBits::eFragment
+                    }
+                }
+            )
+        ) {
             return false;
         }
 
@@ -49,7 +64,7 @@ namespace backend {
             mContext,
             ePipelineTypeGraphics,
             { "compiled/default.spv" },
-            mDefaultDescriptorLayout.getHandle(),
+            mCameraDescriptorLayout.getHandle(),
             { mDrawPushConstants }
         )) {
             return false;

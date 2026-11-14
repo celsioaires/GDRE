@@ -15,7 +15,8 @@ namespace backend {
         Swapchain mSwapchain;
         Command mCommand;
         Descriptor mDefaultDescriptor;
-        DescriptorLayout mDefaultDescriptorLayout;
+        DescriptorLayout mCameraDescriptorLayout;
+        DescriptorLayout mMaterialDescriptorLayout;
         PushConstants mDrawPushConstants;
         Pipeline mDefaultPipeline;
         Image mDepthImage;
@@ -38,7 +39,8 @@ namespace backend {
         const Context& getContext() const { return mContext; }
         const Swapchain& getSwapchain() const { return mSwapchain; }
         const Command& getCommand() const { return mCommand; }
-        const DescriptorLayout& getDefaultDescriptorLayout() const { return mDefaultDescriptorLayout; }
         const Descriptor& getDefaultDescriptor() const { return mDefaultDescriptor; };
+        const DescriptorLayout& getCameraDescriptorLayout() const { return mCameraDescriptorLayout; }
+        const DescriptorLayout& getMaterialDescriptorLayout() const { return mMaterialDescriptorLayout; }
     };
 }

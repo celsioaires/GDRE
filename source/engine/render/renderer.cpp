@@ -1,5 +1,7 @@
 #include "renderer.h"
 
+#include "spdlog/spdlog.h"
+
 namespace render {
     bool Renderer::initialize(const core::Platform& platform) {
         mPlatform = &platform;
@@ -9,6 +11,9 @@ namespace render {
             return false;
         }
 
+        // Meshes
+        mMeshes.reserve(1000);
+
         // Camera
         if (!mCamera.initialize(mBackend)) {
             return false;
@@ -17,14 +22,36 @@ namespace render {
         return true;
     }
 
-    bool Renderer::uploadMesh(const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices) {
+    bool Renderer::uploadMesh(const glm::mat4& transformMatrix, const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices) {
+        spdlog::info(
+        "Upload position: {}, {}, {}",
+        transformMatrix[3].x,
+        transformMatrix[3].y,
+        transformMatrix[3].z
+    );
+
+
         // Upload
         mMeshes.emplace_back();
 
         // Initialize
-        if (!mMeshes.back().initialize(mBackend, vertices, indices)) {
-            // Failed
+        Mesh& mesh = mMeshes.back();
+
+        if (!mesh.initialize(mBackend, transformMatrix, vertices, indices)) {
             mMeshes.pop_back();
+            return false;
+        }
+
+        return true;
+    }
+
+    bool Renderer::uploadMaterial() {
+        // Upload
+        mMaterials.emplace_back();
+
+        // Initialize
+        if (!mMaterials.back().initialize(mBackend)) {
+            mMaterials.pop_back();
             return false;
         }
 
@@ -37,7 +64,7 @@ namespace render {
 
         // Meshes
         for (Mesh& mesh : mMeshes) {
-            mesh.updateTransform();
+            
         }
 
         // Camera
