@@ -21,7 +21,7 @@ namespace backend {
             .depthAttachmentFormat = vk::Format::eD32Sfloat
         };
 
-        bool initialize(const Context& context, PipelineType type, const std::vector<std::string>& shaderFiles, const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<PushConstants>& pushConstants);
+        bool initialize(const Context& context, PipelineType type, const std::vector<std::string>& shaderFiles, const std::vector<vk::DescriptorSetLayout>& descriptorLayouts, const std::vector<PushConstants>& pushConstants);
 
         // Getters
         const vk::raii::PipelineLayout& getLayout() const { return mLayout; }
@@ -30,7 +30,7 @@ namespace backend {
     private:
         // Initializers
         bool initializeShaders(const std::vector<std::string>& files);
-        bool initializeLayout(const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<vk::PushConstantRange>& pushConstants);
+        bool initializeLayout(const std::vector<vk::DescriptorSetLayout>& descriptorLayouts, const std::vector<vk::PushConstantRange>& pushConstants);
         bool initializeGraphicsPipeline();
         bool initializeComputePipeline();
     };

@@ -1,6 +1,7 @@
 struct VertexOutput {
     float4 position : SV_Position;
     float3 color;
+    float2 uv;
 };
 
 struct Vertex {
@@ -8,6 +9,8 @@ struct Vertex {
     float padding0;
     float3 color;
     float padding1;
+    float2 uv;
+    float2 padding2;
 };
 
 struct PushConstants {
@@ -40,12 +43,18 @@ VertexOutput vertexMain(uint id : SV_VertexID) {
         mul(drawConstants.transformMatrix, float4(vertex.position, 1))));
 
     output.color = vertex.color;
+    output.uv = vertex.uv;
 
     return output;
 }
 
+[[vk::binding(0, 1)]]
+Sampler2D colorTexture;
+
 [shader("fragment")]
 
 float4 fragmentMain(VertexOutput vertex) : SV_Target {
-    return float4(vertex.color, 1);
+    float4 texel = colorTexture.Sample(vertex.uv);
+
+    return texel;
 }

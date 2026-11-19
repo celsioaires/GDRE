@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+
 #include "gltf.h"
 
 #include <spdlog/spdlog.h>
@@ -5,7 +7,99 @@
 #include <fastgltf/tools.hpp>
 
 namespace asset {
-    void Primitive::load(const fastgltf::Asset& asset, const fastgltf::Primitive& primitive) {
+    bool Texture::load(const fastgltf::Asset& asset, const fastgltf::Image& image) {
+        // Handle
+        std::visit(
+            fastgltf::visitor {
+                [&](const fastgltf::sources::URI& source) {
+                    const std::string path(source.uri->path().begin(), source.uri->path().end());
+
+                    mPixels = stbi_load(path.c_str(), &mWidth, &mHeight, &mChannels, STBI_rgb_alpha);
+                },
+                [&](const fastgltf::sources::Vector& vector) {
+                    mPixels = stbi_load_from_memory(
+                        reinterpret_cast<stbi_uc const*>(vector.bytes.data()),
+                        static_cast<int>(vector.bytes.size()),
+                        &mWidth,
+                        &mHeight,
+                        &mChannels,
+                        STBI_rgb_alpha
+                    );
+                },
+                [&](const fastgltf::sources::Array& array) {
+                    mPixels = stbi_load_from_memory(
+                        reinterpret_cast<const stbi_uc*>(array.bytes.data()),
+                        static_cast<int>(array.bytes.size()),
+                        &mWidth,
+                        &mHeight,
+                        &mChannels,
+                        STBI_rgb_alpha
+                    );
+                },
+                [&](const fastgltf::sources::BufferView& view) {
+                    const fastgltf::BufferView& bufferView = asset.bufferViews[view.bufferViewIndex];
+                    const fastgltf::Buffer& buffer = asset.buffers[bufferView.bufferIndex];
+
+                    std::visit(
+                        fastgltf::visitor{
+                            [&](const fastgltf::sources::Vector& vector) {
+                                mPixels = stbi_load_from_memory(
+                                    reinterpret_cast<stbi_uc const*>(vector.bytes.data() + bufferView.byteOffset),
+                                    static_cast<int>(bufferView.byteLength),
+                                    &mWidth,
+                                    &mHeight,
+                                    &mChannels,
+                                    STBI_rgb_alpha
+                                );
+                            },
+                            [&](const fastgltf::sources::Array& array) {
+                                const size_t offset = bufferView.byteOffset;
+                                const size_t size = bufferView.byteLength;
+
+                                if (offset > array.bytes.size() ||
+                                    size > array.bytes.size() - offset) {
+                                    spdlog::error("BufferView out of bounds");
+                                    return;
+                                }
+
+                                mPixels = stbi_load_from_memory(
+                                    reinterpret_cast<const stbi_uc*>(array.bytes.data() + offset),
+                                    static_cast<int>(size),
+                                    &mWidth,
+                                    &mHeight,
+                                    &mChannels,
+                                    STBI_rgb_alpha
+                                );
+                            },
+                            [&](const auto& source) {
+                                spdlog::error("Unsupported buffer source: {}", typeid(source).name());
+                            }
+                        },
+                        buffer.data
+                    );
+                },
+                [&](auto& source) {
+                    spdlog::error("Unsupported image source: {}", typeid(source).name());
+                }
+            },
+            image.data
+        );
+
+        if (mPixels == nullptr) {
+            spdlog::error("Failed to load glTF texture");
+            return false;
+        }
+
+        return true;
+    }
+
+    void Material::load(const fastgltf::Material& material, const std::vector<Texture>& textures) {
+        if (material.pbrData.baseColorTexture.has_value()) {
+            mColorTexture = &textures[material.pbrData.baseColorTexture->textureIndex];
+        }
+    }
+
+    void Primitive::load(const fastgltf::Asset& asset, const fastgltf::Primitive& primitive, const Material* material) {
         size_t initialVertex = mVertices.size();
 
         // Position attribute
@@ -74,7 +168,7 @@ namespace asset {
         }
         else {
             for (size_t i = 0; i < mVertices.size(); i++) {
-                mVertices[initialVertex + i].setColor({ 1.0f, 0.5f, 0.0f, 1.0f });
+                mVertices[initialVertex + i].setColor({ 1.0f });
             }
         }
 
@@ -88,33 +182,30 @@ namespace asset {
                 }
             );
         }
+
+        mMaterial = material;
     }
 
-    void Mesh::load(const fastgltf::Asset& asset, const fastgltf::Mesh& mesh) {
+    void Mesh::load(const fastgltf::Asset& asset, const fastgltf::Mesh& mesh, std::vector<Material>& materials) {
         // Primitives
         for (const fastgltf::Primitive& fprimitive : mesh.primitives) {
             Primitive primitive;
-            primitive.load(asset, fprimitive);
+
+            const Material* material = nullptr;
+
+            if (fprimitive.materialIndex.has_value()) {
+                material = &materials[fprimitive.materialIndex.value()];
+            }
+
+            primitive.load(asset, fprimitive, material);
 
             mPrimitives.push_back(std::move(primitive));
         }
     }
 
-    void Material::load(const fastgltf::Asset& asset, const fastgltf::Material& material) {
-
-    }
-
-    void Node::load(const fastgltf::Asset& asset, const fastgltf::Node& node, const std::vector<Mesh>& meshes) {
+    void Node::load(const fastgltf::Asset& asset, const fastgltf::Node& node, const std::vector<Mesh>& meshes, std::vector<Node>& nodes) {
         mName = node.name;
         mLocalTransform = fastgltf::getLocalTransformMatrix(node);
-
-        spdlog::info(
-            "Node: {} | Position: {}, {}, {}",
-            node.name,
-            mLocalTransform[3].x(),
-            mLocalTransform[3].y(),
-            mLocalTransform[3].z()
-        );
 
         // Mesh
         if (node.meshIndex.has_value()) {
@@ -122,11 +213,13 @@ namespace asset {
         }
 
         // Childrens
-        mChildrens.resize(node.children.size());
+        mChildrens.reserve(node.children.size());
 
-        for (size_t childrenIndex : node.children) {
-            Node& children = mChildrens[childrenIndex];
-            children.load(asset, asset.nodes[childrenIndex], meshes);
+        for (size_t childIndex : node.children) {
+            Node* children = &nodes[childIndex];
+            children->mParent = this;
+
+            mChildrens.push_back(children);
         }
     }
 
@@ -163,13 +256,54 @@ namespace asset {
         // Asset
         mAsset = std::move(asset.get());
 
-        loadData();
+        // Data
+        if (!loadData()) {
+            return false;
+        }
 
         return true;
     }
 
-    void Gltf::loadData() {
+    bool Gltf::loadData() {
+        // Textures
+        mTextures.resize(mAsset.textures.size());
+
+        for (size_t i = 0; i < mAsset.textures.size(); i++) {
+            const fastgltf::Texture& ftexture = mAsset.textures[i];
+
+            if (!ftexture.imageIndex.has_value()) {
+                spdlog::warn("Texture {} has no imageIndex", i);
+                continue;
+            }
+
+            const size_t imageIndex = ftexture.imageIndex.value();
+
+            if (imageIndex >= mAsset.images.size()) {
+                spdlog::error(
+                    "Invalid imageIndex {} for texture {} (images: {})",
+                    imageIndex,
+                    i,
+                    mAsset.images.size()
+                );
+                return false;
+            }
+
+            if (!mTextures[i].load(mAsset, mAsset.images[imageIndex])) {
+                return false;
+            }
+        }
+
         int i;
+
+        // Materials
+        mMaterials.resize(mAsset.materials.size());
+
+        i = 0;
+
+        for (Material& material : mMaterials) {
+            material.load(mAsset.materials[i], mTextures);
+            i++;
+        }
 
         // Meshes
         mMeshes.resize(mAsset.meshes.size());
@@ -177,7 +311,7 @@ namespace asset {
         i = 0;
 
         for (Mesh& mesh : mMeshes) {
-            mesh.load(mAsset, mAsset.meshes[i]);
+            mesh.load(mAsset, mAsset.meshes[i], mMaterials);
             i++;
         }
 
@@ -187,18 +321,19 @@ namespace asset {
         i = 0;
 
         for (Node& node : mNodes) {
-            node.load(mAsset, mAsset.nodes[i], mMeshes);
+            node.load(mAsset, mAsset.nodes[i], mMeshes, mNodes);
             i++;
         }
 
-        // Materials
-        mMaterials.resize(mAsset.materials.size());
+        // Root nodes
+        mRootNodes.reserve(mNodes.size());
 
-        i = 0;
-
-        for (Material& material : mMaterials) {
-            material.load(mAsset, mAsset.materials[i]);
-            i++;
+        for (Node& node : mNodes) {
+            if (node.getParent() == nullptr) {
+                mRootNodes.push_back(&node);
+            }
         }
+
+        return true;
     }
 }

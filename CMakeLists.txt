@@ -81,6 +81,7 @@ add_executable(GDRE
     source/engine/render/material.cpp
     source/engine/render/mesh.cpp
     source/engine/render/renderer.cpp
+    source/engine/render/texture.cpp
     # engine scene
     source/engine/scene/scene.cpp)
 
@@ -103,7 +104,7 @@ if (ENABLE_CPP20_MODULE)
     target_compile_definitions(GDRE PRIVATE USE_CPP20_MODULES)
 endif()
 
-# GDRE ImGui sources
+# GDRE external sources
 target_sources(GDRE PRIVATE
     external/imgui/backends/imgui_impl_glfw.cpp
     external/imgui/backends/imgui_impl_vulkan.cpp
@@ -112,6 +113,8 @@ target_sources(GDRE PRIVATE
     external/imgui/imgui_tables.cpp
     external/imgui/imgui_widgets.cpp)
 
+# GDRE include directories
+target_include_directories(GDRE PRIVATE external/stb)
 target_include_directories(GDRE PRIVATE external/imgui)
 
 # GDRE library links

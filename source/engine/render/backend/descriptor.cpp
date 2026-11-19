@@ -45,22 +45,41 @@ namespace backend {
         return true;
     }
 
-    void DescriptorSet::updateBinding(uint32_t index, vk::DescriptorType type, vk::Buffer buffer) const {
-        // Buffer info
-        vk::DescriptorBufferInfo bufferInfo;
-
-        if (buffer != nullptr) {
-            bufferInfo.buffer = buffer;
-            bufferInfo.range = vk::WholeSize;
-        }
+    void DescriptorSet::updateBuffer(uint32_t binding, vk::DescriptorType type, vk::Buffer buffer) const {
+        // Info
+        const vk::DescriptorBufferInfo info{
+            .buffer = buffer,
+            .range = vk::WholeSize
+        };
 
         // Write
         const vk::WriteDescriptorSet write{
             .dstSet = *mHandle,
-            .dstBinding = index,
+            .dstBinding = binding,
             .descriptorCount = 1,
             .descriptorType = type,
-            .pBufferInfo = &bufferInfo
+            .pBufferInfo = &info
+        };
+
+        // Update
+        mContext->getDevice().updateDescriptorSets(write, {});
+    }
+
+    void DescriptorSet::updateImage(uint32_t binding, vk::DescriptorType type, const Image& image) const {
+        // Info
+        const vk::DescriptorImageInfo info{
+            .sampler = *image.getSampler(),
+            .imageView = *image.getView(),
+            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        };
+
+        // Write
+        const vk::WriteDescriptorSet write{
+            .dstSet = *mHandle,
+            .dstBinding = binding,
+            .descriptorCount = 1,
+            .descriptorType = type,
+            .pImageInfo = &info
         };
 
         // Update
@@ -104,7 +123,7 @@ namespace backend {
         // Info
         const vk::DescriptorPoolCreateInfo info{
             .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-            .maxSets = 10,
+            .maxSets = 10000,
             .poolSizeCount = static_cast<uint32_t>(sizes.size()),
             .pPoolSizes = sizes.data()
         };

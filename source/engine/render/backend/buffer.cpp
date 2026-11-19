@@ -13,14 +13,15 @@ namespace backend {
         mContext = &context;
         mSize = size;
 
-        const VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
-
+        VmaMemoryUsage memoryUsage;
         vk::BufferUsageFlags usage;
 
         // Handle and allocation
         switch (type) {
             case eBufferTypeStaging: {
                 usage = vk::BufferUsageFlagBits::eTransferSrc;
+                memoryUsage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
                 initializeBuffer(usage, memoryUsage);
                 break;
             }
@@ -29,16 +30,22 @@ namespace backend {
                     vk::BufferUsageFlagBits::eVertexBuffer |
                     vk::BufferUsageFlagBits::eShaderDeviceAddress;
 
+                memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
+
                 initializeBuffer(usage, memoryUsage);
                 break;
             }
             case eBufferTypeIndex: {
                 usage = vk::BufferUsageFlagBits::eIndexBuffer;
+                memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
+
                 initializeBuffer(usage, memoryUsage);
                 break;
             }
             case eBufferTypeUniform: {
                 usage = vk::BufferUsageFlagBits::eUniformBuffer;
+                memoryUsage = VMA_MEMORY_USAGE_CPU_ONLY;
+
                 initializeBuffer(usage, memoryUsage);
                 break;
             }
@@ -64,7 +71,7 @@ namespace backend {
         return true;
     }
 
-    void Buffer::mapMemory(const void* data) const {
+    bool Buffer::mapMemory(const void* data) const {
         const VmaAllocator& allocator = mContext->getAllocator();
 
         void* mappedMemory;
@@ -72,12 +79,14 @@ namespace backend {
         // Map
         if (vmaMapMemory(allocator, mAllocation, &mappedMemory) != VK_SUCCESS) {
             spdlog::error("Failed to map buffer memory");
-            return;
+            return false;
         }
 
         memcpy(mappedMemory, data, mSize);
 
         vmaUnmapMemory(allocator, mAllocation);
+
+        return true;
     }
 
     bool Buffer::initializeBuffer(vk::BufferUsageFlags usage, VmaMemoryUsage memoryUsage) {

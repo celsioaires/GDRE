@@ -19,7 +19,7 @@ namespace backend {
         return true;
     }
 
-    void Command::pipelineBarrier(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const {
+    void Command::pipelineImageBarrier(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const {
         // Aspect
         vk::ImageAspectFlags aspect = vk::ImageAspectFlagBits::eColor;
 
@@ -54,7 +54,7 @@ namespace backend {
     }
 
     void Command::beginRendering(vk::Extent2D extent, vk::AttachmentLoadOp loadOp, const vk::raii::ImageView& colorView, const vk::raii::ImageView& depthView) const {
-        vk::ClearValue clearValue = vk::ClearColorValue{ 0, 0, 0, 1 };
+        vk::ClearValue clearValue = vk::ClearColorValue{ 0.0f, 0.0f, 1.0f, 1.0f };
 
         // Color attachment
         const vk::RenderingAttachmentInfo colorAttachment{
@@ -104,6 +104,43 @@ namespace backend {
         const vk::Rect2D scissor{ .extent = extent };
 
         mBuffer.setScissor(0, scissor);
+    }
+
+    void Command::copyBufferToImage(const Buffer& buffer, const Image& image, vk::Extent2D extent) const {
+        const vk::Image& imageHandle = image.getHandle();
+
+        // Transition layout
+        pipelineImageBarrier(
+            imageHandle,
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eTransferDstOptimal
+        );
+
+        // Image subresource
+        vk::ImageSubresourceLayers imageSubresource{
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .layerCount = 1
+        };
+
+        // Copy buffer
+        vk::BufferImageCopy copyInfo{
+            .imageSubresource = imageSubresource,
+            .imageExtent = { extent.width, extent.height, 1 }
+        };
+
+        mBuffer.copyBufferToImage(
+            buffer.getHandle(),
+            imageHandle,
+            vk::ImageLayout::eTransferDstOptimal,
+            copyInfo
+        );
+
+        // Transition layout
+        pipelineImageBarrier(
+            imageHandle,
+            vk::ImageLayout::eTransferDstOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal
+        );
     }
 
     bool Command::initializeCommandPool(uint32_t queueFamily) {

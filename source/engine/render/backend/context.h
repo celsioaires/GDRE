@@ -24,6 +24,7 @@ namespace backend {
         vk::raii::Queue mGraphicsQueue = nullptr;
         VmaAllocator mAllocator;
         vk::raii::Fence mSubmitFence = nullptr;
+        vk::raii::Fence mImmediateFence = nullptr;
         vk::raii::Semaphore mAcquireSemaphore = nullptr;
         vk::raii::Semaphore mSubmitSemaphore = nullptr;
     public:
@@ -33,8 +34,11 @@ namespace backend {
 
         bool initialize(GLFWwindow* window);
 
-        void submitQueue(const vk::raii::CommandBuffer& commandBuffer) const;
+        void submitQueue(const vk::raii::CommandBuffer& commandBuffer, bool immediate = false) const;
         bool presentQueue(const vk::raii::SwapchainKHR& swapchain, uint32_t imageIndex) const;
+
+        void waitForFence(bool immediate = false) const;
+        void resetFence(bool immediate = false) const;
 
         void waitIdle() const;
 
@@ -58,9 +62,8 @@ namespace backend {
         bool initializePhysicalDevice();
         bool initializeDevice();
         bool initializeAllocator();
-        bool initializeFence();
+        bool initializeFences();
         bool initializeSemaphore(vk::raii::Semaphore& semaphore);
-
 
         // Callback
         static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(

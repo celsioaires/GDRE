@@ -4,6 +4,8 @@
 
 #include <vulkan/vk_enum_string_helper.h>
 
+#include "buffer.h"
+
 namespace backend {
     bool Image::initialize(const Context& context, ImageType type, vk::Extent2D extent) {
         mContext = &context;
@@ -11,17 +13,8 @@ namespace backend {
 
         bool failed = false;
 
-        // Initialize
+        // Handle, allocation and view
         switch (type) {
-            case eImageTypeColor: {
-                mFormat = vk::Format::eB8G8R8A8Unorm;
-
-                failed =
-                    !initializeImage(vk::ImageUsageFlagBits::eColorAttachment) ||
-                    !initializeView(vk::ImageAspectFlagBits::eColor);
-
-                break;
-            }
             case eImageTypeDepth: {
                 mFormat = vk::Format::eD32Sfloat;
 
@@ -31,9 +24,23 @@ namespace backend {
 
                 break;
             }
+            case eImageTypeSampler: {
+                mFormat = vk::Format::eR8G8B8A8Unorm;
+
+                failed =
+                    !initializeImage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst) ||
+                    !initializeView(vk::ImageAspectFlagBits::eColor);
+
+                break;
+            }
         }
 
         if (failed) {
+            return false;
+        }
+
+        // Sampler
+        if (!initializeSampler()) {
             return false;
         }
 
@@ -46,7 +53,7 @@ namespace backend {
         vmaDestroyImage(mContext->getAllocator(), mHandle, mAllocation);
 
         mFormat = vk::Format::eUndefined;
-        mExtent = vk::Extent2D{};
+        mExtent = vk::Extent2D{ 0, 0 };
         mContext = nullptr;
     }
 
@@ -61,7 +68,6 @@ namespace backend {
             .extent = { mExtent.width, mExtent.height, 1 },
             .mipLevels = 1,
             .arrayLayers = 1,
-            .samples = vk::SampleCountFlagBits::e1,
             .usage = usage
         };
 
@@ -86,6 +92,10 @@ namespace backend {
                     spdlog::error("Failed to create depth image: {}", string_VkResult(result));
                     break;
                 }
+                default: {
+                    spdlog::error("Failed to create unknown image: {}", string_VkResult(result));
+                    break;
+                }
             }
 
             return false;
@@ -99,6 +109,10 @@ namespace backend {
             }
             case VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT: {
                 spdlog::info("Depth image created successfully");
+                break;
+            }
+            default: {
+                spdlog::info("Unknown image created successfully");
                 break;
             }
         }
@@ -136,6 +150,10 @@ namespace backend {
                     spdlog::info("Depth view created successfully");
                     break;
                 }
+                default: {
+                    spdlog::info("Unknown view created successfully");
+                    break;
+                }
             }
         }
         catch (const vk::SystemError& error) {
@@ -149,8 +167,33 @@ namespace backend {
                     spdlog::error("Failed to create depth view: {}", error.what());
                     break;
                 }
+                default: {
+                    spdlog::error("Failed to create unknown view: {}", error.what());
+                    break;
+                }
             }
 
+            return false;
+        }
+
+        return true;
+    }
+
+    bool Image::initializeSampler() {
+        // Info
+        const vk::SamplerCreateInfo info{
+            .magFilter = vk::Filter::eLinear,
+            .minFilter = vk::Filter::eLinear
+        };
+
+        // Initialize
+        try {
+            mSampler = vk::raii::Sampler(mContext->getDevice(), info);
+            spdlog::info("Sampler created successfully");
+        }
+        catch (const vk::SystemError& error) {
+            // Failed
+            spdlog::error("Failed to create sampler: {}", error.what());
             return false;
         }
 

@@ -6,11 +6,14 @@
 
 namespace backend {
     bool Backend::initialize(GLFWwindow* window) {
-        // Context, swapchain and command
+        uint32_t graphicsFamily = mContext.getGraphicsFamily();
+
+        // Context, swapchain and commands
         if (
             !mContext.initialize(window) ||
             !mSwapchain.initialize(mContext) ||
-            !mCommand.initialize(mContext, mContext.getGraphicsFamily())
+            !mCommand.initialize(mContext, graphicsFamily) ||
+            !mImmediateCommand.initialize(mContext, graphicsFamily)
         ) {
             return false;
         }
@@ -19,7 +22,7 @@ namespace backend {
         if (!mDefaultDescriptor.initialize(
             mContext, {
                 { .type = vk::DescriptorType::eUniformBuffer, .descriptorCount = 10 },
-                { .type = vk::DescriptorType::eSampler, .descriptorCount = 10 }
+                { .type = vk::DescriptorType::eCombinedImageSampler, .descriptorCount = 10000 }
             }
         )) {
             return false;
@@ -43,7 +46,7 @@ namespace backend {
                 mContext, {
                     {
                         .binding = 0,
-                        .descriptorType = vk::DescriptorType::eSampler,
+                        .descriptorType = vk::DescriptorType::eCombinedImageSampler,
                         .descriptorCount = 1,
                         .stageFlags = vk::ShaderStageFlagBits::eFragment
                     }
@@ -64,7 +67,7 @@ namespace backend {
             mContext,
             ePipelineTypeGraphics,
             { "compiled/default.spv" },
-            mCameraDescriptorLayout.getHandle(),
+            { *mCameraDescriptorLayout.getHandle(), *mMaterialDescriptorLayout.getHandle() },
             { mDrawPushConstants }
         )) {
             return false;
@@ -100,7 +103,7 @@ namespace backend {
             }
 
             // Reset fence
-            mContext.getDevice().resetFences(*mContext.getSubmitFence());
+            mContext.resetFence();
 
             // Begin command buffer
             mCommand.getBuffer().begin({});
@@ -111,17 +114,17 @@ namespace backend {
         }
 
         // Swapchain image barrier (undefined to color)
-        mCommand.pipelineBarrier(swapchainImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+        mCommand.pipelineImageBarrier(swapchainImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
 
         // Depth image barrier (undefined to depth)
-        mCommand.pipelineBarrier(mDepthImage.getHandle(), vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentOptimal);
+        mCommand.pipelineImageBarrier(mDepthImage.getHandle(), vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentOptimal);
     }
 
     void Backend::endCommands() {
         const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
 
         // Swapchain image barrier (color to present)
-        mCommand.pipelineBarrier(mSwapchain.getCurrentImage(), vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR);
+        mCommand.pipelineImageBarrier(mSwapchain.getCurrentImage(), vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR);
 
         try {
             commandBuffer.end();
@@ -148,12 +151,22 @@ namespace backend {
     }
 
     void Backend::waitCommands() {
-        // Wait submit fence
-        vk::Result waitResult = mContext.getDevice().waitForFences(*mContext.getSubmitFence(), true, UINT64_MAX);
+        mContext.waitForFence();
+    }
 
-        if (waitResult != vk::Result::eSuccess) {
-            spdlog::error("Failed to wait for fence", string_VkResult(static_cast<VkResult>(waitResult)));
-        }
+    void Backend::beginImmediateCommands() const {
+        mContext.resetFence(true);
+
+        mImmediateCommand.getBuffer().begin({});
+    }
+
+    void Backend::endImmediateCommands() const {
+        const vk::raii::CommandBuffer& commandBuffer = mImmediateCommand.getBuffer();
+
+        commandBuffer.end();
+
+        mContext.submitQueue(commandBuffer, true);
+        mContext.waitForFence(true);
     }
 
     void Backend::beginRender(const DescriptorSet& matrixDescriptor) const {
@@ -176,7 +189,13 @@ namespace backend {
         mCommand.setRenderExtent(swapchainExtent);
 
         // Bind descriptor sets
-        commandBuffer.bindDescriptorSets(bindPoint, *mDefaultPipeline.getLayout(), 0, *matrixDescriptor.getHandle(), {});
+        commandBuffer.bindDescriptorSets(
+            bindPoint,
+            *mDefaultPipeline.getLayout(),
+            0,
+            *matrixDescriptor.getHandle(),
+            {}
+        );
     }
 
     void Backend::endRender() const {
@@ -202,8 +221,16 @@ namespace backend {
         commandBuffer.draw(count, 1, 0, 0);
     }
 
-    void Backend::drawIndexedVertices(const PushConstantsData& pushConstants, const Buffer& buffer, uint32_t count) const {
+    void Backend::drawIndexedVertices(const PushConstantsData& pushConstants, const DescriptorSet& materialDescriptor, const Buffer& buffer, uint32_t count) const {
         const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
+
+        commandBuffer.bindDescriptorSets(
+            mDefaultPipeline.getBindPoint(),
+            *mDefaultPipeline.getLayout(),
+            1,
+            *materialDescriptor.getHandle(),
+            {}
+        );
 
         // Bind index buffer
         commandBuffer.bindIndexBuffer(buffer.getHandle(), 0, vk::IndexType::eUint32);

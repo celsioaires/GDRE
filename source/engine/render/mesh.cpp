@@ -3,8 +3,7 @@
 #include "glm/ext/matrix_transform.hpp"
 
 namespace render {
-    bool Mesh::initialize(const backend::Backend& backend, const glm::mat4& transformMatrix, const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices) {
-        mTransformMatrix = transformMatrix;
+    bool Mesh::initialize(const backend::Backend& backend, const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices) {
         mVertexCount = vertices.size();
         mIndexCount = static_cast<uint32_t>(indices.size());
 

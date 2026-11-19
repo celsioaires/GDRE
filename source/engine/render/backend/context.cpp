@@ -27,7 +27,7 @@ namespace backend {
             !initializePhysicalDevice() ||
             !initializeDevice() ||
             !initializeAllocator() ||
-            !initializeFence() ||
+            !initializeFences() ||
             !initializeSemaphore(mAcquireSemaphore) ||
             !initializeSemaphore(mSubmitSemaphore)
         ) {
@@ -37,23 +37,26 @@ namespace backend {
         return true;
     }
 
-    void Context::submitQueue(const vk::raii::CommandBuffer& commandBuffer) const {
-        // Wait stage
-        const vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-
-        // Submit info
-        const vk::SubmitInfo info{
-            .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &*mAcquireSemaphore,
-            .pWaitDstStageMask = &waitStage,
+    void Context::submitQueue(const vk::raii::CommandBuffer& commandBuffer, bool immediate) const {
+        vk::SubmitInfo info{
             .commandBufferCount = 1,
-            .pCommandBuffers = &*commandBuffer,
-            .signalSemaphoreCount = 1,
-            .pSignalSemaphores = &*mSubmitSemaphore
+            .pCommandBuffers = &*commandBuffer
         };
 
-        // Submit command buffer
-        mGraphicsQueue.submit(info, *mSubmitFence);
+        if (!immediate) {
+            // Pipeline stage
+            const vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+
+            // Info
+            info.waitSemaphoreCount = 1;
+            info.pWaitSemaphores = &*mAcquireSemaphore;
+            info.pWaitDstStageMask = &waitStage;
+            info.signalSemaphoreCount = 1;
+            info.pSignalSemaphores = &*mSubmitSemaphore;
+        }
+
+        // Submit
+        mGraphicsQueue.submit(info, !immediate ? *mSubmitFence : *mImmediateFence);
     }
 
     bool Context::presentQueue(const vk::raii::SwapchainKHR& swapchain, uint32_t imageIndex) const {
@@ -86,6 +89,19 @@ namespace backend {
         }
 
         return true;
+    }
+
+    void Context::waitForFence(bool immediate) const {
+        // Wait submit fence
+        vk::Result result = mDevice.waitForFences(!immediate ? *mSubmitFence : *mImmediateFence, true, UINT64_MAX);
+
+        if (result != vk::Result::eSuccess) {
+            spdlog::error("Failed to wait for fence", string_VkResult(static_cast<VkResult>(result)));
+        }
+    }
+
+    void Context::resetFence(bool immediate) const {
+        mDevice.resetFences(!immediate ? *mSubmitFence : *mImmediateFence);
     }
 
     void Context::waitIdle() const {
@@ -370,20 +386,22 @@ namespace backend {
         return true;
     }
 
-    bool Context::initializeFence() {
+    bool Context::initializeFences() {
         // Info
-        const vk::FenceCreateInfo createInfo{
+        const vk::FenceCreateInfo info{
             .flags = vk::FenceCreateFlags::BitsType::eSignaled
         };
 
         // Initialize
         try {
-            mSubmitFence = vk::raii::Fence(mDevice, createInfo);
-            spdlog::info("Fence created successfully");
+            mSubmitFence = vk::raii::Fence(mDevice, info);
+            mImmediateFence = vk::raii::Fence(mDevice, info);
+
+            spdlog::info("Fences created successfully");
         }
         catch (const vk::SystemError& error) {
             // Failed
-            spdlog::error("Failed to create fence: {}", error.what());
+            spdlog::error("Failed to create fences: {}", error.what());
             return false;
         }
 

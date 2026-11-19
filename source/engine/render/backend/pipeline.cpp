@@ -5,7 +5,7 @@
 #include <spdlog/spdlog.h>
 
 namespace backend {
-    bool Pipeline::initialize(const Context& context, PipelineType type, const std::vector<std::string>& shaderFiles, const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<PushConstants>& pushConstants) {
+    bool Pipeline::initialize(const Context& context, PipelineType type, const std::vector<std::string>& shaderFiles, const std::vector<vk::DescriptorSetLayout>& descriptorLayouts, const std::vector<PushConstants>& pushConstants) {
         mContext = &context;
 
         // Shaders
@@ -13,7 +13,7 @@ namespace backend {
             return false;
         }
 
-        // Layout
+        // Push constants
         std::vector<vk::PushConstantRange> pushConstantRanges;
 
         for (const PushConstants& pushConstant : pushConstants) {
@@ -23,7 +23,8 @@ namespace backend {
             });
         }
 
-        if (!initializeLayout(descriptorLayout, pushConstantRanges)) {
+        // Layout
+        if (!initializeLayout(descriptorLayouts, pushConstantRanges)) {
             return false;
         }
 
@@ -90,11 +91,11 @@ namespace backend {
         return true;
     }
 
-    bool Pipeline::initializeLayout(const vk::raii::DescriptorSetLayout& descriptorLayout, const std::vector<vk::PushConstantRange>& pushConstants) {
+    bool Pipeline::initializeLayout(const std::vector<vk::DescriptorSetLayout>& descriptorLayouts, const std::vector<vk::PushConstantRange>& pushConstants) {
         // Info
         const vk::PipelineLayoutCreateInfo info{
-            .setLayoutCount = 1,
-            .pSetLayouts = &*descriptorLayout,
+            .setLayoutCount = static_cast<uint32_t>(descriptorLayouts.size()),
+            .pSetLayouts = descriptorLayouts.data(),
             .pushConstantRangeCount = static_cast<uint32_t>(pushConstants.size()),
             .pPushConstantRanges = pushConstants.data()
         };

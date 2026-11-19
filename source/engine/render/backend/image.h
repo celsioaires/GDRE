@@ -4,8 +4,8 @@
 
 namespace backend {
     enum ImageType {
-        eImageTypeColor,
-        eImageTypeDepth
+        eImageTypeDepth,
+        eImageTypeSampler
     };
 
     class Image {
@@ -16,7 +16,12 @@ namespace backend {
         vk::Image mHandle;
         VmaAllocation mAllocation;
         vk::raii::ImageView mView = nullptr;
+        vk::raii::Sampler mSampler = nullptr;
     public:
+        // Move
+        Image() = default;
+        Image(Image&& other) noexcept = default;
+
         ~Image() { cleanup(); }
 
         bool initialize(const Context& context, ImageType type, vk::Extent2D extent);
@@ -25,9 +30,11 @@ namespace backend {
         // Getters
         const vk::Image& getHandle() const { return mHandle; }
         const vk::raii::ImageView& getView() const { return mView; }
+        const vk::raii::Sampler& getSampler() const { return mSampler; }
     private:
         // Initializers
         bool initializeImage(vk::ImageUsageFlags usage);
         bool initializeView(vk::ImageAspectFlags aspect);
+        bool initializeSampler();
     };
 }

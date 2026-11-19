@@ -3,7 +3,8 @@
 
 namespace asset {
     bool Loader::initialize() {
-        if (!loadGltf(cAssetsDirectory + "gltf/oil_drum.glb")) {
+        // Assets
+        if (!loadGltf(cAssetsDirectory + "gltf/structure.glb")) {
             return false;
         }
 
@@ -17,7 +18,7 @@ namespace asset {
             return false;
         }
 
-        mGltfAssets.push_back(std::move(gltf));
+        mAssets.push_back(std::move(gltf));
 
         return true;
     }

@@ -6,7 +6,7 @@ namespace engine {
             !mPlatform.initialize() ||
             !mLoader.initialize() ||
             !mRenderer.initialize(mPlatform) ||
-            !mScene.initialize(mLoader, mRenderer) ||
+            !mScene.load(mLoader, mRenderer) ||
             !mGui.initialize(mRenderer)
         ) {
             return false;
@@ -45,7 +45,7 @@ namespace engine {
         mRenderer.beginDraw();
 
         mRenderer.drawScene();
-        mGui.drawWindows();
+        //mGui.drawWindows();
 
         mRenderer.endDraw();
     }

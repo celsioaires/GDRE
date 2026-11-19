@@ -1,7 +1,5 @@
 #include "renderer.h"
 
-#include "spdlog/spdlog.h"
-
 namespace render {
     bool Renderer::initialize(const core::Platform& platform) {
         mPlatform = &platform;
@@ -11,9 +9,6 @@ namespace render {
             return false;
         }
 
-        // Meshes
-        mMeshes.reserve(1000);
-
         // Camera
         if (!mCamera.initialize(mBackend)) {
             return false;
@@ -22,50 +17,43 @@ namespace render {
         return true;
     }
 
-    bool Renderer::uploadMesh(const glm::mat4& transformMatrix, const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices) {
-        spdlog::info(
-        "Upload position: {}, {}, {}",
-        transformMatrix[3].x,
-        transformMatrix[3].y,
-        transformMatrix[3].z
-    );
-
-
+    const Mesh* Renderer::uploadMesh(const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices) {
         // Upload
         mMeshes.emplace_back();
 
         // Initialize
         Mesh& mesh = mMeshes.back();
 
-        if (!mesh.initialize(mBackend, transformMatrix, vertices, indices)) {
+        if (!mesh.initialize(mBackend, vertices, indices)) {
             mMeshes.pop_back();
-            return false;
+            return nullptr;
         }
 
-        return true;
+        return &mesh;
     }
 
-    bool Renderer::uploadMaterial() {
+    const Material* Renderer::uploadMaterial(const TextureData& colorTexture) {
         // Upload
         mMaterials.emplace_back();
 
         // Initialize
-        if (!mMaterials.back().initialize(mBackend)) {
+        Material& material = mMaterials.back();
+
+        if (!mMaterials.back().initialize(mBackend, colorTexture)) {
             mMaterials.pop_back();
-            return false;
+            return nullptr;
         }
 
-        return true;
+        return &material;
+    }
+
+    void Renderer::uploadRenderable(const Mesh* mesh, const Material* material, const glm::mat4& transform) {
+        mRenderables.emplace_back(mesh, material, transform);
     }
 
     void Renderer::updateScene() {
         // Previous frame
         mBackend.waitCommands();
-
-        // Meshes
-        for (Mesh& mesh : mMeshes) {
-            
-        }
 
         // Camera
         mCamera.updateData();
@@ -82,14 +70,18 @@ namespace render {
     void Renderer::drawScene() const {
         mBackend.beginRender(mCamera.getDescriptorSet());
 
-        for (const Mesh& mesh : mMeshes) {
+        for (const Renderable& renderable : mRenderables) {
+            const Mesh* mesh = renderable.getMesh();
+            const Material* material = renderable.getMaterial();
+
             mBackend.drawIndexedVertices(
                 {
-                    .vertexBuffer = mesh.getVertexBuffer().getAddress(),
-                    .transformMatrix = mesh.getTransformMatrix()
+                    .vertexBuffer = mesh->getVertexBuffer().getAddress(),
+                    .transformMatrix = renderable.getTransform()
                 },
-                mesh.getIndexBuffer(),
-                mesh.getIndexCount()
+                material->getDescriptorSet(),
+                mesh->getIndexBuffer(),
+                mesh->getIndexCount()
             );
         }
 

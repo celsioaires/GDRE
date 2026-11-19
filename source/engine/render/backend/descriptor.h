@@ -1,6 +1,7 @@
 #pragma once
 
 #include "context.h"
+#include "image.h"
 
 namespace backend {
     class DescriptorLayout {
@@ -22,7 +23,8 @@ namespace backend {
     public:
         bool initialize(const Context& context, const vk::raii::DescriptorPool& pool, const vk::raii::DescriptorSetLayout& layout);
 
-        void updateBinding(uint32_t index, vk::DescriptorType type, vk::Buffer buffer) const;
+        void updateBuffer(uint32_t binding, vk::DescriptorType type, vk::Buffer buffer) const;
+        void updateImage(uint32_t binding, vk::DescriptorType type, const Image& image) const;
 
         // Getters
         const vk::raii::DescriptorSet& getHandle() const { return mHandle; }
