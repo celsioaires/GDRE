@@ -24,23 +24,28 @@ struct CameraData {
     float4x4 projectionMatrix;
 };
 
+struct MaterialData {
+    float4 colorFactors;
+    float4 metalRoughFactors;
+};
+
 [[vk::push_constant]]
-PushConstants drawConstants;
+PushConstants gDrawConstants;
 
 [[vk::binding(0, 0)]]
-ConstantBuffer<CameraData> cameraData;
+ConstantBuffer<CameraData> gCameraData;
 
 [shader("vertex")]
 
 VertexOutput vertexMain(uint id : SV_VertexID) {
-    Vertex vertex = drawConstants.vertexBuffer[id];
+    Vertex vertex = gDrawConstants.vertexBuffer[id];
 
     VertexOutput output;
 
     output.position =
-        mul(cameraData.projectionMatrix,
-        mul(cameraData.viewMatrix,
-        mul(drawConstants.transformMatrix, float4(vertex.position, 1))));
+        mul(gCameraData.projectionMatrix,
+        mul(gCameraData.viewMatrix,
+        mul(gDrawConstants.transformMatrix, float4(vertex.position, 1))));
 
     output.color = vertex.color;
     output.uv = vertex.uv;
@@ -49,12 +54,17 @@ VertexOutput vertexMain(uint id : SV_VertexID) {
 }
 
 [[vk::binding(0, 1)]]
-Sampler2D colorTexture;
+ConstantBuffer<MaterialData> gMaterialData;
+
+[[vk::binding(1, 1)]]
+Sampler2D gColorTexture;
 
 [shader("fragment")]
 
 float4 fragmentMain(VertexOutput vertex) : SV_Target {
-    float4 texel = colorTexture.Sample(vertex.uv);
+    float4 texel = gColorTexture.Sample(vertex.uv);
+
+    texel *= gMaterialData.colorFactors;
 
     return texel;
 }

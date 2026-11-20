@@ -7,6 +7,7 @@ namespace scene {
     class Scene {
         render::Renderer* mRenderer = nullptr;
 
+        // Data
         std::unordered_map<const asset::Material*, const render::Material*> mMaterials;
         std::unordered_map<const asset::Primitive*, const render::Mesh*> mMeshes;
     public:

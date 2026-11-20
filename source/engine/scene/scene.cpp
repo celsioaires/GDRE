@@ -1,9 +1,10 @@
 #include "scene.h"
-#include <iostream>
+
 namespace scene {
     bool Scene::load(const asset::Loader& loader, render::Renderer& renderer) {
         mRenderer = &renderer;
 
+        // Data
         if (!loadAssets(loader.getAssets())) {
             return false;
         }
@@ -36,6 +37,7 @@ namespace scene {
                 std::vector<backend::Vertex> backendVertices;
 
                 for (const asset::Vertex& vertex : vertices) {
+                    // Attribs
                     const fastgltf::math::fvec3& position = vertex.getPosition();
                     const fastgltf::math::fvec4& color = vertex.getColor();
                     const fastgltf::math::fvec2& uv = vertex.getUv();
@@ -47,6 +49,7 @@ namespace scene {
                     });
                 }
 
+                // Upload
                 const render::Mesh* uploadedMesh = mRenderer->uploadMesh(backendVertices, primitive.getIndices());
 
                 if (uploadedMesh == nullptr) {
@@ -62,20 +65,43 @@ namespace scene {
 
     bool Scene::loadMaterials(const std::vector<asset::Material>& materials) {
         for (const asset::Material& material : materials) {
+            // Data
+            const asset::MaterialData& data = material.getData();
+
+            const fastgltf::math::fvec4& colorFactors = data.getColorFactors();
+            const fastgltf::math::fvec4& metalRoughFactors = data.getMetalRoughFactors();
+
+            render::MaterialData renderData{
+                .colorFactors = {
+                    colorFactors.x(),
+                    colorFactors.y(),
+                    colorFactors.z(),
+                    colorFactors.w()
+                },
+                .metalRoughFactors = {
+                    metalRoughFactors.x(),
+                    metalRoughFactors.y(),
+                    0, 0
+                }
+            };
+
             // Color Texture
             const asset::Texture* colorTexture = material.getColorTexture();
 
-            if (colorTexture == nullptr) {
-                continue;
+            uint32_t whitePixel = 0xFFFFFFFF;
+
+            render::TextureData colorTextureData{ .pixels = &whitePixel };
+
+            if (colorTexture != nullptr && colorTexture->getPixels() != nullptr) {
+                colorTextureData = {
+                    .width = colorTexture->getWidth(),
+                    .height = colorTexture->getHeight(),
+                    .pixels = colorTexture->getPixels()
+                };
             }
 
-            const render::TextureData colorTextureData{
-                .width = colorTexture->getWidth(),
-                .height = colorTexture->getHeight(),
-                .pixels = colorTexture->getPixels()
-            };
-
-            const render::Material* uploadedMaterial = mRenderer->uploadMaterial(colorTextureData);
+            // Upload
+            const render::Material* uploadedMaterial = mRenderer->uploadMaterial(renderData, colorTextureData);
 
             if (uploadedMaterial == nullptr) {
                 return false;
@@ -95,6 +121,7 @@ namespace scene {
             const asset::Node* parentNode = &node;
 
             while (parentNode != nullptr) {
+                // Hierarchy transform
                 const fastgltf::math::fmat4x4& localTransform = parentNode->getLocalTransform();
                 glm::mat4 backendLocalTransform(1);
 
@@ -111,23 +138,25 @@ namespace scene {
                 parentNode = parentNode->getParent();
             }
 
+            // Mesh
             const asset::Mesh* mesh = node.getMesh();
 
             if (mesh == nullptr) {
                 continue;
             }
 
+            // Primitives
             const std::vector<asset::Primitive>& primitives = mesh->getPrimitives();
 
             for (const asset::Primitive& primitive : primitives) {
-                // Mesh
+                // Find GPU mesh
                 auto backendMesh = mMeshes.find(&primitive);
 
                 if (backendMesh == mMeshes.end()) {
                     continue;
                 }
 
-                // Material
+                // Find GPU material
                 auto backendMaterial = mMaterials.find(primitive.getMaterial());
 
                 if (backendMaterial == mMaterials.end()) {

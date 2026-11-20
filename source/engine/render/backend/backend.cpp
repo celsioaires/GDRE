@@ -46,6 +46,11 @@ namespace backend {
                 mContext, {
                     {
                         .binding = 0,
+                        .descriptorType = vk::DescriptorType::eUniformBuffer,
+                        .descriptorCount = 1,
+                        .stageFlags = vk::ShaderStageFlagBits::eFragment
+                    }, {
+                        .binding = 1,
                         .descriptorType = vk::DescriptorType::eCombinedImageSampler,
                         .descriptorCount = 1,
                         .stageFlags = vk::ShaderStageFlagBits::eFragment

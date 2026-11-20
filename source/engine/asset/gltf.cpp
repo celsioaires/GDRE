@@ -94,6 +94,20 @@ namespace asset {
     }
 
     void Material::load(const fastgltf::Material& material, const std::vector<Texture>& textures) {
+        // Data
+        mData.setColorFactors({
+            material.pbrData.baseColorFactor[0],
+            material.pbrData.baseColorFactor[1],
+            material.pbrData.baseColorFactor[2],
+            material.pbrData.baseColorFactor[3],
+        });
+
+        mData.setMetalRoughFactors({
+            material.pbrData.metallicFactor,
+            material.pbrData.roughnessFactor
+        });
+
+        // Color texture
         if (material.pbrData.baseColorTexture.has_value()) {
             mColorTexture = &textures[material.pbrData.baseColorTexture->textureIndex];
         }
@@ -186,7 +200,7 @@ namespace asset {
         mMaterial = material;
     }
 
-    void Mesh::load(const fastgltf::Asset& asset, const fastgltf::Mesh& mesh, std::vector<Material>& materials) {
+    void Mesh::load(const fastgltf::Asset& asset, const fastgltf::Mesh& mesh, const std::vector<Material>& materials) {
         // Primitives
         for (const fastgltf::Primitive& fprimitive : mesh.primitives) {
             Primitive primitive;
@@ -203,7 +217,7 @@ namespace asset {
         }
     }
 
-    void Node::load(const fastgltf::Asset& asset, const fastgltf::Node& node, const std::vector<Mesh>& meshes, std::vector<Node>& nodes) {
+    void Node::load(const fastgltf::Node& node, const std::vector<Mesh>& meshes, std::vector<Node>& nodes) {
         mName = node.name;
         mLocalTransform = fastgltf::getLocalTransformMatrix(node);
 
@@ -265,35 +279,25 @@ namespace asset {
     }
 
     bool Gltf::loadData() {
+        size_t i;
+
         // Textures
         mTextures.resize(mAsset.textures.size());
 
-        for (size_t i = 0; i < mAsset.textures.size(); i++) {
+        i = 0;
+
+        for (Texture& texture : mTextures) {
             const fastgltf::Texture& ftexture = mAsset.textures[i];
+            std::optional<size_t> imageIndex = ftexture.imageIndex;
 
-            if (!ftexture.imageIndex.has_value()) {
-                spdlog::warn("Texture {} has no imageIndex", i);
-                continue;
+            if (imageIndex.has_value()) {
+                if (!texture.load(mAsset, mAsset.images[imageIndex.value()])) {
+                    return false;
+                }
             }
 
-            const size_t imageIndex = ftexture.imageIndex.value();
-
-            if (imageIndex >= mAsset.images.size()) {
-                spdlog::error(
-                    "Invalid imageIndex {} for texture {} (images: {})",
-                    imageIndex,
-                    i,
-                    mAsset.images.size()
-                );
-                return false;
-            }
-
-            if (!mTextures[i].load(mAsset, mAsset.images[imageIndex])) {
-                return false;
-            }
+            i++;
         }
-
-        int i;
 
         // Materials
         mMaterials.resize(mAsset.materials.size());
@@ -321,7 +325,7 @@ namespace asset {
         i = 0;
 
         for (Node& node : mNodes) {
-            node.load(mAsset, mAsset.nodes[i], mMeshes, mNodes);
+            node.load(mAsset.nodes[i], mMeshes, mNodes);
             i++;
         }
 

@@ -3,7 +3,6 @@
 #include <filesystem>
 
 #include <stb_image.h>
-
 #include <fastgltf/core.hpp>
 
 namespace asset {
@@ -25,6 +24,19 @@ namespace asset {
         void setColor(const fastgltf::math::fvec4& color) { mColor = color; }
     };
 
+    class MaterialData {
+        fastgltf::math::fvec4 mColorFactors;
+        fastgltf::math::fvec4 mMetalRoughFactors;
+    public:
+        // Getters
+        const fastgltf::math::fvec4& getColorFactors() const { return mColorFactors; }
+        const fastgltf::math::fvec4& getMetalRoughFactors() const { return mMetalRoughFactors; }
+
+        // Setters
+        void setColorFactors(const fastgltf::math::fvec4& colorFactors) { mColorFactors = colorFactors; }
+        void setMetalRoughFactors(const fastgltf::math::fvec4& metalRoughFactors) { mMetalRoughFactors = metalRoughFactors; }
+    };
+
     class Texture {
         int mWidth = 0;
         int mHeight = 0;
@@ -40,11 +52,13 @@ namespace asset {
     };
 
     class Material {
+        MaterialData mData;
         const Texture* mColorTexture = nullptr;
     public:
         void load(const fastgltf::Material& material, const std::vector<Texture>& textures);
 
         // Getters
+        const MaterialData& getData() const { return mData; }
         const Texture* getColorTexture() const { return mColorTexture; }
     };
 
@@ -64,20 +78,20 @@ namespace asset {
     class Mesh {
         std::vector<Primitive> mPrimitives;
     public:
-        void load(const fastgltf::Asset& asset, const fastgltf::Mesh& mesh, std::vector<Material>& materials);
+        void load(const fastgltf::Asset& asset, const fastgltf::Mesh& mesh, const std::vector<Material>& materials);
 
         // Getters
         const std::vector<Primitive>& getPrimitives() const { return mPrimitives ; }
     };
 
     class Node {
-        std::string mName = "NODE NAME :D";
+        std::string mName;
         fastgltf::math::fmat4x4 mLocalTransform;
         const Mesh* mMesh = nullptr;
         std::vector<Node*> mChildrens;
         const Node* mParent = nullptr;
     public:
-        void load(const fastgltf::Asset& asset, const fastgltf::Node& node, const std::vector<Mesh>& meshes, std::vector<Node>& nodes);
+        void load(const fastgltf::Node& node, const std::vector<Mesh>& meshes, std::vector<Node>& nodes);
 
         // Getters
         const fastgltf::math::fmat4x4& getLocalTransform() const { return mLocalTransform; };
