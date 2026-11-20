@@ -108,8 +108,17 @@ namespace asset {
         });
 
         // Color texture
-        if (material.pbrData.baseColorTexture.has_value()) {
-            mColorTexture = &textures[material.pbrData.baseColorTexture->textureIndex];
+        std::optional<fastgltf::TextureInfo> colorTexture = material.pbrData.baseColorTexture;
+
+        if (colorTexture.has_value()) {
+            mColorTexture = &textures[colorTexture->textureIndex];
+        }
+
+        // Metal rough texture
+        std::optional<fastgltf::TextureInfo> metalRoughTexture = material.pbrData.metallicRoughnessTexture;
+
+        if (metalRoughTexture.has_value()) {
+            mMetalRoughTexture = &textures[metalRoughTexture->textureIndex];
         }
     }
 

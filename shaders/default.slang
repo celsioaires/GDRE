@@ -27,6 +27,7 @@ struct CameraData {
 struct MaterialData {
     float4 colorFactors;
     float4 metalRoughFactors;
+    float4 padding0;
 };
 
 [[vk::push_constant]]
@@ -58,6 +59,9 @@ ConstantBuffer<MaterialData> gMaterialData;
 
 [[vk::binding(1, 1)]]
 Sampler2D gColorTexture;
+
+[[vk::binding(2, 1)]]
+Sampler2D gMetalRoughTexture;
 
 [shader("fragment")]
 

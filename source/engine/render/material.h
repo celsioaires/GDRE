@@ -19,8 +19,9 @@ namespace render {
         backend::DescriptorSet mDescriptorSet;
         backend::Buffer mUniformBuffer;
         Texture mColorTexture;
+        Texture mMetalRoughTexture;
     public:
-        bool initialize(const backend::Backend& backend, const MaterialData& data, const TextureData& colorTextureData);
+        bool initialize(const backend::Backend& backend, const MaterialData& data, const TextureData& colorTextureData, const TextureData& metalRoughTextureData);
 
         // Getters
         const backend::DescriptorSet& getDescriptorSet() const { return mDescriptorSet; }

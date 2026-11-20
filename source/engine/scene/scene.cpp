@@ -85,12 +85,12 @@ namespace scene {
                 }
             };
 
-            // Color Texture
+            // Color texture
             const asset::Texture* colorTexture = material.getColorTexture();
 
-            uint32_t whitePixel = 0xFFFFFFFF;
+            uint32_t colorPixel = 0xFFFFFFFF;
 
-            render::TextureData colorTextureData{ .pixels = &whitePixel };
+            render::TextureData colorTextureData{ .pixels = &colorPixel };
 
             if (colorTexture != nullptr && colorTexture->getPixels() != nullptr) {
                 colorTextureData = {
@@ -100,8 +100,24 @@ namespace scene {
                 };
             }
 
+            // Metal rough texture
+            const asset::Texture* metalRoughTexture = material.getColorTexture();
+
+            uint32_t metalRoughPixel = 0xFF00FF00;
+
+            render::TextureData metalRoughTextureData{ .pixels = &metalRoughPixel };
+
+            if (metalRoughTexture != nullptr && metalRoughTexture->getPixels() != nullptr) {
+                colorTextureData = {
+                    .width = metalRoughTexture->getWidth(),
+                    .height = metalRoughTexture->getHeight(),
+                    .pixels = metalRoughTexture->getPixels()
+                };
+            }
+
             // Upload
-            const render::Material* uploadedMaterial = mRenderer->uploadMaterial(renderData, colorTextureData);
+            const render::Material* uploadedMaterial =
+                mRenderer->uploadMaterial(renderData, colorTextureData, metalRoughTextureData);
 
             if (uploadedMaterial == nullptr) {
                 return false;

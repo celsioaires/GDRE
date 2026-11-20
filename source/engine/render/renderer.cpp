@@ -31,15 +31,15 @@ namespace render {
 
         return &mesh;
     }
-    /* const std::vector<TextureData>& textureDatas */
-    const Material* Renderer::uploadMaterial(const MaterialData& data, const TextureData& colorTextureData ) {
+
+    const Material* Renderer::uploadMaterial(const MaterialData& data, const TextureData& colorTextureData, const TextureData& metalRoughTextureData) {
         // Upload
         mMaterials.emplace_back();
 
         // Initialize
         Material& material = mMaterials.back();
 
-        if (!mMaterials.back().initialize(mBackend, data, colorTextureData)) {
+        if (!mMaterials.back().initialize(mBackend, data, colorTextureData, metalRoughTextureData)) {
             mMaterials.pop_back();
             return nullptr;
         }

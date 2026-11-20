@@ -54,6 +54,7 @@ namespace asset {
     class Material {
         MaterialData mData;
         const Texture* mColorTexture = nullptr;
+        const Texture* mMetalRoughTexture = nullptr;
     public:
         void load(const fastgltf::Material& material, const std::vector<Texture>& textures);
 

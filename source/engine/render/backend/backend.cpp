@@ -54,6 +54,11 @@ namespace backend {
                         .descriptorType = vk::DescriptorType::eCombinedImageSampler,
                         .descriptorCount = 1,
                         .stageFlags = vk::ShaderStageFlagBits::eFragment
+                    }, {
+                        .binding = 2,
+                        .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                        .descriptorCount = 1,
+                        .stageFlags = vk::ShaderStageFlagBits::eFragment
                     }
                 }
             )

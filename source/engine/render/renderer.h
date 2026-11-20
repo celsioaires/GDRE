@@ -25,7 +25,7 @@ namespace render {
         bool initialize(const core::Platform& platform);
 
         const Mesh* uploadMesh(const std::vector<backend::Vertex>& vertices, const std::vector<uint32_t>& indices);
-        const Material* uploadMaterial(const MaterialData& data, const TextureData& colorTextureData);
+        const Material* uploadMaterial(const MaterialData& data, const TextureData& colorTextureData, const TextureData& metalRoughTextureData);
         void uploadRenderable(const Mesh* mesh, const Material* material, const glm::mat4& transform);
 
         void updateScene();

@@ -1,7 +1,7 @@
 #include "material.h"
 
 namespace render {
-    bool Material::initialize(const backend::Backend& backend, const MaterialData& data, const TextureData& colorTextureData) {
+    bool Material::initialize(const backend::Backend& backend, const MaterialData& data, const TextureData& colorTextureData, const TextureData& metalRoughTextureData) {
         mBackend = &backend;
 
         const backend::Context& context = mBackend->getContext();
@@ -33,6 +33,11 @@ namespace render {
             return false;
         }
 
+        // Metal rough texture
+        if (!mMetalRoughTexture.load(backend, metalRoughTextureData)) {
+            return false;
+        }
+
         // Update descriptor
         updateDesriptorSet();
 
@@ -40,18 +45,25 @@ namespace render {
     }
 
     void Material::updateDesriptorSet() {
-        // Uniform buffer
+        // Data
         mDescriptorSet.updateBuffer(
             0,
             vk::DescriptorType::eUniformBuffer,
             mUniformBuffer.getHandle()
         );
 
-        // Sampler
+        // Color texture
         mDescriptorSet.updateImage(
             1,
             vk::DescriptorType::eCombinedImageSampler,
             mColorTexture.getImage()
+        );
+
+        // Metal rough texture
+        mDescriptorSet.updateImage(
+            2,
+            vk::DescriptorType::eCombinedImageSampler,
+            mMetalRoughTexture.getImage()
         );
     }
 }
