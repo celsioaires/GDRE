@@ -95,14 +95,14 @@ namespace asset {
 
     void Material::load(const fastgltf::Material& material, const std::vector<Texture>& textures) {
         // Data
-        mData.setColorFactors({
+        mData.setColorFactor({
             material.pbrData.baseColorFactor[0],
             material.pbrData.baseColorFactor[1],
             material.pbrData.baseColorFactor[2],
             material.pbrData.baseColorFactor[3],
         });
 
-        mData.setMetalRoughFactors({
+        mData.setMetalRoughFactor({
             material.pbrData.metallicFactor,
             material.pbrData.roughnessFactor
         });
@@ -126,14 +126,14 @@ namespace asset {
         size_t initialVertex = mVertices.size();
 
         // Position attribute
-        const auto positionAttribute = primitive.findAttribute("POSITION");
+        const auto positionAttrib = primitive.findAttribute("POSITION");
 
-        if (positionAttribute == primitive.attributes.end()) {
+        if (positionAttrib == primitive.attributes.end()) {
             return;
         }
 
         // Position accesor
-        const fastgltf::Accessor& positionAccessor = asset.accessors[positionAttribute->accessorIndex];
+        const fastgltf::Accessor& positionAccessor = asset.accessors[positionAttrib->accessorIndex];
 
         const size_t vertexOffset = mVertices.size();
 
@@ -148,28 +148,41 @@ namespace asset {
             }
         );
 
-        // Normal attribute
-        const auto normalAttribute = primitive.findAttribute("NORMAL");
+        // Normal attrib
+        const auto normalAttrib = primitive.findAttribute("NORMAL");
 
         // Normals
-        if (normalAttribute != primitive.attributes.end()) {
+        if (normalAttrib != primitive.attributes.end()) {
             fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(
                 asset,
-                asset.accessors[normalAttribute->accessorIndex],
+                asset.accessors[normalAttrib->accessorIndex],
                 [&](fastgltf::math::fvec3 normal, size_t index) {
                     mVertices[initialVertex + index].setNormal(normal);
                 }
             );
         }
 
+        // Tangent attrib
+        const auto tangentAttrib = primitive.findAttribute("TANGENT");
+
+        // Tangent
+        if (tangentAttrib != primitive.attributes.end()) {
+            fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec4>(
+                asset,
+                asset.accessors[tangentAttrib->accessorIndex],
+                [&](fastgltf::math::fvec4 tangent, size_t index) {
+                    mVertices[initialVertex + index].setTangent(tangent);
+                }
+            );
+        }
         // Uv attribute
-        const auto uvAttribute = primitive.findAttribute("TEXCOORD_0");
+        const auto uvAttrib = primitive.findAttribute("TEXCOORD_0");
 
         // Uvs
-        if (uvAttribute != primitive.attributes.end()) {
+        if (uvAttrib != primitive.attributes.end()) {
             fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec2>(
                 asset,
-                asset.accessors[uvAttribute->accessorIndex],
+                asset.accessors[uvAttrib->accessorIndex],
                 [&](fastgltf::math::fvec2 uv, size_t index) {
                     mVertices[initialVertex + index].setUv(uv);
                 }
@@ -177,13 +190,13 @@ namespace asset {
         }
 
         // Color attribute
-        const auto colorAttribute = primitive.findAttribute("COLOR_0");
+        const auto colorAttrib = primitive.findAttribute("COLOR_0");
 
         // Colors
-        if (colorAttribute != primitive.attributes.end()) {
+        if (colorAttrib != primitive.attributes.end()) {
             fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec4>(
                 asset,
-                asset.accessors[colorAttribute->accessorIndex],
+                asset.accessors[colorAttrib->accessorIndex],
                 [&](fastgltf::math::fvec4 color, size_t index) {
                     mVertices[initialVertex + index].setColor(color);
                 }

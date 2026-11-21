@@ -39,13 +39,17 @@ namespace scene {
                 for (const asset::Vertex& vertex : vertices) {
                     // Attribs
                     const fastgltf::math::fvec3& position = vertex.getPosition();
+                    const fastgltf::math::fvec3& normal = vertex.getNormal();
+                    const fastgltf::math::fvec4& tangent = vertex.getTangent();
                     const fastgltf::math::fvec4& color = vertex.getColor();
                     const fastgltf::math::fvec2& uv = vertex.getUv();
 
                     backendVertices.push_back({
                         .position = { position.x(), position.y(), position.z() },
-                        .color = { color.x(), color.y(), color.z() },
-                        .uv = { uv.x(), uv.y() }
+                        .normal = { normal.x(), normal.y(), normal.z() },
+                        .tangent = { tangent.x(), tangent.y(), tangent.z(), tangent.w() },
+                        .uv = { uv.x(), uv.y() },
+                        .color = { color.x(), color.y(), color.z(), color.w() }
                     });
                 }
 
@@ -68,19 +72,19 @@ namespace scene {
             // Data
             const asset::MaterialData& data = material.getData();
 
-            const fastgltf::math::fvec4& colorFactors = data.getColorFactors();
-            const fastgltf::math::fvec4& metalRoughFactors = data.getMetalRoughFactors();
+            const fastgltf::math::fvec4& colorFactor = data.getColorFactor();
+            const fastgltf::math::fvec4& metalRoughFactor = data.getMetalRoughFactor();
 
             render::MaterialData renderData{
                 .colorFactors = {
-                    colorFactors.x(),
-                    colorFactors.y(),
-                    colorFactors.z(),
-                    colorFactors.w()
+                    colorFactor.x(),
+                    colorFactor.y(),
+                    colorFactor.z(),
+                    colorFactor.w()
                 },
                 .metalRoughFactors = {
-                    metalRoughFactors.x(),
-                    metalRoughFactors.y(),
+                    metalRoughFactor.x(),
+                    metalRoughFactor.y(),
                     0, 0
                 }
             };

@@ -45,7 +45,7 @@ namespace engine {
         mRenderer.beginDraw();
 
         mRenderer.drawScene();
-        //mGui.drawWindows();
+        mGui.drawWindows();
 
         mRenderer.endDraw();
     }

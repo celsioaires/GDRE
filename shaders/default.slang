@@ -1,16 +1,18 @@
 struct VertexOutput {
     float4 position : SV_Position;
-    float3 color;
     float2 uv;
+    float4 color;
 };
 
 struct Vertex {
     float3 position;
-    float padding0;
-    float3 color;
-    float padding1;
+    float _padding0;
+    float3 normal;
+    float _padding1;
+    float4 tangent;
     float2 uv;
-    float2 padding2;
+    float2 _padding2;
+    float4 color;
 };
 
 struct PushConstants {
@@ -25,8 +27,8 @@ struct CameraData {
 };
 
 struct MaterialData {
-    float4 colorFactors;
-    float4 metalRoughFactors;
+    float4 colorFactor;
+    float4 metalRoughFactor;
     float4 padding0;
 };
 
@@ -48,8 +50,8 @@ VertexOutput vertexMain(uint id : SV_VertexID) {
         mul(gCameraData.viewMatrix,
         mul(gDrawConstants.transformMatrix, float4(vertex.position, 1))));
 
-    output.color = vertex.color;
     output.uv = vertex.uv;
+    output.color = vertex.color;
 
     return output;
 }
@@ -68,7 +70,7 @@ Sampler2D gMetalRoughTexture;
 float4 fragmentMain(VertexOutput vertex) : SV_Target {
     float4 texel = gColorTexture.Sample(vertex.uv);
 
-    texel *= gMaterialData.colorFactors;
+    texel *= gMaterialData.colorFactor;
 
     return texel;
 }

@@ -9,32 +9,36 @@ namespace asset {
     class Vertex {
         fastgltf::math::fvec3 mPosition;
         fastgltf::math::fvec3 mNormal;
+        fastgltf::math::fvec4 mTangent;
         fastgltf::math::fvec2 mUv;
         fastgltf::math::fvec4 mColor;
     public:
         // Getters
         const fastgltf::math::fvec3& getPosition() const { return mPosition; }
+        const fastgltf::math::fvec3& getNormal() const { return mNormal; }
+        const fastgltf::math::fvec4& getTangent() const { return mTangent; }
         const fastgltf::math::fvec2& getUv() const { return mUv; }
         const fastgltf::math::fvec4& getColor() const { return mColor; }
 
         // Setters
         void setPosition(const fastgltf::math::fvec3& position) { mPosition = position; }
         void setNormal(const fastgltf::math::fvec3& normal) { mNormal = normal; }
+        void setTangent(const fastgltf::math::fvec4& tangent) { mTangent = tangent; }
         void setUv(const fastgltf::math::fvec2& uv) { mUv = uv; }
         void setColor(const fastgltf::math::fvec4& color) { mColor = color; }
     };
 
     class MaterialData {
-        fastgltf::math::fvec4 mColorFactors;
-        fastgltf::math::fvec4 mMetalRoughFactors;
+        fastgltf::math::fvec4 mColorFactor;
+        fastgltf::math::fvec4 mMetalRoughFactor;
     public:
         // Getters
-        const fastgltf::math::fvec4& getColorFactors() const { return mColorFactors; }
-        const fastgltf::math::fvec4& getMetalRoughFactors() const { return mMetalRoughFactors; }
+        const fastgltf::math::fvec4& getColorFactor() const { return mColorFactor; }
+        const fastgltf::math::fvec4& getMetalRoughFactor() const { return mMetalRoughFactor; }
 
         // Setters
-        void setColorFactors(const fastgltf::math::fvec4& colorFactors) { mColorFactors = colorFactors; }
-        void setMetalRoughFactors(const fastgltf::math::fvec4& metalRoughFactors) { mMetalRoughFactors = metalRoughFactors; }
+        void setColorFactor(const fastgltf::math::fvec4& colorFactor) { mColorFactor = colorFactor; }
+        void setMetalRoughFactor(const fastgltf::math::fvec4& metalRoughFactor) { mMetalRoughFactor = metalRoughFactor; }
     };
 
     class Texture {
