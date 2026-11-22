@@ -132,22 +132,28 @@ else()
 endif()
 
 # Slang shader compilation
-function(add_slang_shader_target TARGET)
-    set(SHADERS_DIR "${CMAKE_SOURCE_DIR}/shaders")
-    set(SHADER_OUTPUT "${SHADERS_DIR}/compiled/default.spv")
-    set(SHADER_SOURCE "${SHADERS_DIR}/default.slang")
-    set(SHADER_SCRIPT "${SHADERS_DIR}/compile.sh")
+if (WIN32)
+    set(SLANG_SCRIPT "${CMAKE_SOURCE_DIR}/shaders/compile.bat")
+    set(SLANG_COMMAND cmd /C "${SLANG_SCRIPT}")
+else()
+    set(SLANG_SCRIPT "${CMAKE_SOURCE_DIR}/shaders/compile.sh")
+    set(SLANG_COMMAND bash "${SLANG_SCRIPT}")
+endif()
 
-    add_custom_command(
-        OUTPUT "${SHADER_OUTPUT}"
-        COMMAND bash "${SHADER_SCRIPT}"
-        WORKING_DIRECTORY "${SHADERS_DIR}"
-        DEPENDS "${SHADER_SCRIPT}" "${SHADER_SOURCE}"
-        COMMENT "Compiling Slang shaders"
-        VERBATIM)
+set(SHADERS_DIR "${CMAKE_SOURCE_DIR}/shaders")
+set(SHADER_OUTPUT "${SHADERS_DIR}/compiled/default.spv")
+set(SHADER_SOURCE "${SHADERS_DIR}/default.slang")
 
-    add_custom_target(${TARGET} DEPENDS "${SHADER_OUTPUT}")
-endfunction()
+add_custom_command(
+    OUTPUT "${SHADER_OUTPUT}"
+    COMMAND ${SLANG_COMMAND}
+    WORKING_DIRECTORY "${SHADERS_DIR}"
+    DEPENDS
+    "${SHADER_SCRIPT}"
+    "${SHADER_SOURCE}"
+    COMMENT "Compiling Slang shaders"
+    VERBATIM)
 
-add_slang_shader_target(compile_shaders)
+add_custom_target(compile_shaders DEPENDS "${SHADER_OUTPUT}")
+
 add_dependencies(GDRE compile_shaders)

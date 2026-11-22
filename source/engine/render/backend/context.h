@@ -12,7 +12,7 @@
 
 namespace backend {
     class Context {
-        // Objects
+        const uint32_t mVersion = vk::ApiVersion13;
         GLFWwindow* mWindow;
         vk::raii::Context mHandle;
         vk::raii::Instance mInstance = nullptr;
@@ -28,8 +28,6 @@ namespace backend {
         vk::raii::Semaphore mAcquireSemaphore = nullptr;
         vk::raii::Semaphore mSubmitSemaphore = nullptr;
     public:
-        static inline const uint32_t cApiVersion = vk::ApiVersion14;
-
         ~Context();
 
         bool initialize(GLFWwindow* window);
@@ -43,6 +41,7 @@ namespace backend {
         void waitIdle() const;
 
         // Getters
+        uint32_t getVersion() const { return mVersion; }
         GLFWwindow* getWindow() const { return mWindow; }
         const vk::raii::Instance& getInstance() const { return mInstance; }
         const vk::raii::SurfaceKHR& getSurface() const { return mSurface; }

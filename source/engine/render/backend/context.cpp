@@ -124,7 +124,7 @@ namespace backend {
             .applicationVersion = applicationVersion,
             .pEngineName = applicationName,
             .engineVersion = applicationVersion,
-            .apiVersion = cApiVersion
+            .apiVersion = mVersion
         };
 
         // Extensions
@@ -226,11 +226,11 @@ namespace backend {
 
         // Iterate
         for (const vk::raii::PhysicalDevice& device : devices) {
-            bool vulkan14Support, featuresSupport, swapchainSupport, graphicsQueueSupport;
+            bool versionSupport, featuresSupport, swapchainSupport, graphicsQueueSupport;
 
-            // Vulkan 1.4 support
-            if (device.getProperties().apiVersion >= vk::ApiVersion14) {
-                vulkan14Support = true;
+            // Version support
+            if (device.getProperties().apiVersion >= mVersion) {
+                versionSupport = true;
             }
 
             // Features support
@@ -281,7 +281,7 @@ namespace backend {
                 i++;
             }
 
-            if (vulkan14Support && featuresSupport && swapchainSupport && graphicsQueueSupport) {
+            if (versionSupport && featuresSupport && swapchainSupport && graphicsQueueSupport) {
                 // Support
                 mPhysicalDevice = device;
                 spdlog::info("Physical device selected successfully");

@@ -11,7 +11,9 @@ namespace core {
 
     bool Platform::initialize() {
         // Hints
-        glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11); // X11
+#if defined(__linux__)
+        glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+#endif
 
         // GLFW initialization
         if (!glfwInit()) {

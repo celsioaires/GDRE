@@ -46,7 +46,7 @@ namespace core {
 
         // Vulkan info
         ImGui_ImplVulkan_InitInfo vulkanInfo{
-            .ApiVersion = backend::Context::cApiVersion,
+            .ApiVersion = context.getVersion(),
             .Instance = *context.getInstance(),
             .PhysicalDevice = *context.getPhysicalDevice(),
             .Device = *context.getDevice(),
