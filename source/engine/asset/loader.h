@@ -4,7 +4,6 @@
 
 namespace asset {
     class Loader {
-        const std::string cAssetsDirectory = GDRE_ASSETS_DIRECTORY;
         std::vector<Gltf> mAssets;
     public:
         bool initialize();

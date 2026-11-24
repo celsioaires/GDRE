@@ -51,7 +51,7 @@ namespace render {
         mRenderables.emplace_back(mesh, material, transform);
     }
 
-    void Renderer::updateScene() {
+    void Renderer::updateCamera() {
         // Previous frame
         mBackend.waitCommands();
 
@@ -67,14 +67,14 @@ namespace render {
         mBackend.endCommands();
     }
 
-    void Renderer::drawScene() const {
+    void Renderer::drawRenderables() const {
         mBackend.beginRender(mCamera.getDescriptorSet());
 
         for (const Renderable& renderable : mRenderables) {
             const Mesh* mesh = renderable.getMesh();
             const Material* material = renderable.getMaterial();
 
-            mBackend.drawIndexedVertices(
+            mBackend.drawPrimitives(
                 {
                     .vertexBuffer = mesh->getVertexBuffer().getAddress(),
                     .transformMatrix = renderable.getTransform()

@@ -15,7 +15,7 @@ namespace backend {
         Swapchain mSwapchain;
         Command mCommand;
         Command mImmediateCommand;
-        Descriptor mDefaultDescriptor;
+        DescriptorPool mDefaultDescriptorPool;
         DescriptorLayout mCameraDescriptorLayout;
         DescriptorLayout mMaterialDescriptorLayout;
         PushConstants mDrawPushConstants;
@@ -37,8 +37,8 @@ namespace backend {
         void endRender() const;
 
         // Draw
-        void drawVertices(const PushConstantsData& pushConstants, uint32_t count);
-        void drawIndexedVertices(const PushConstantsData& pushConstants, const DescriptorSet& materialDescriptor, const Buffer& buffer, uint32_t count) const;
+        /* deprecated: */ void drawVertices(const PushConstantsData& pushConstants, uint32_t count);
+        void drawPrimitives(const PushConstantsData& pushConstants, const DescriptorSet& materialDescriptor, const Buffer& buffer, uint32_t count) const;
 
         void waitContext() const;
 
@@ -47,7 +47,7 @@ namespace backend {
         const Swapchain& getSwapchain() const { return mSwapchain; }
         const Command& getCommand() const { return mCommand; }
         const Command& getImmediateCommand() const { return mImmediateCommand; }
-        const Descriptor& getDefaultDescriptor() const { return mDefaultDescriptor; };
+        const DescriptorPool& getDefaultDescriptorPool() const { return mDefaultDescriptorPool; };
         const DescriptorLayout& getCameraDescriptorLayout() const { return mCameraDescriptorLayout; }
         const DescriptorLayout& getMaterialDescriptorLayout() const { return mMaterialDescriptorLayout; }
     };

@@ -4,13 +4,20 @@
 #include "utils.h"
 
 namespace backend {
+    enum BufferType {
+        eBufferTypeStaging,
+        eBufferTypeVertex,
+        eBufferTypeIndex,
+        eBufferTypeUniform,
+    };
+
     class Buffer {
         // Objects
-        const Context* mContext;
-        vk::Buffer mHandle;
-        VmaAllocation mAllocation;
-        vk::DeviceSize mSize;
-        vk::DeviceAddress mAddress;
+        const Context* mContext = nullptr;
+        vk::Buffer mHandle = nullptr;
+        VmaAllocation mAllocation = nullptr;
+        vk::DeviceSize mSize = 0;
+        vk::DeviceAddress mAddress = 0;
     public:
         ~Buffer();
 

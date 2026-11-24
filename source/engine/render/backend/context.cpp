@@ -10,6 +10,16 @@
 #include <vulkan/vk_enum_string_helper.h>
 
 namespace backend {
+    static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
+        vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
+        vk::DebugUtilsMessageTypeFlagsEXT type,
+        const vk::DebugUtilsMessengerCallbackDataEXT* callbackData,
+        void* userData
+    ) {
+        spdlog::error("Validation error:\n{}", callbackData->pMessage);
+        return false;
+    }
+
     Context::~Context() {
         vmaDestroyAllocator(mAllocator);
     }
@@ -124,7 +134,7 @@ namespace backend {
             .applicationVersion = applicationVersion,
             .pEngineName = applicationName,
             .engineVersion = applicationVersion,
-            .apiVersion = cApiVersion
+            .apiVersion = sVersion
         };
 
         // Extensions
@@ -226,11 +236,15 @@ namespace backend {
 
         // Iterate
         for (const vk::raii::PhysicalDevice& device : devices) {
-            bool vulkan14Support, featuresSupport, swapchainSupport, graphicsQueueSupport;
+            bool
+                versionSupport = false,
+                featuresSupport = false,
+                swapchainSupport = false,
+                graphicsQueueSupport = false;
 
-            // Vulkan 1.4 support
-            if (device.getProperties().apiVersion >= vk::ApiVersion14) {
-                vulkan14Support = true;
+            // Version support
+            if (device.getProperties().apiVersion >= sVersion) {
+                versionSupport = true;
             }
 
             // Features support
@@ -239,24 +253,32 @@ namespace backend {
                 vk::PhysicalDeviceVulkan11Features,
                 vk::PhysicalDeviceVulkan12Features,
                 vk::PhysicalDeviceVulkan13Features
-            > supportedFeatures = device.getFeatures2<
+            >& supportedFeatures = device.getFeatures2<
                 vk::PhysicalDeviceFeatures2,
                 vk::PhysicalDeviceVulkan11Features,
                 vk::PhysicalDeviceVulkan12Features,
                 vk::PhysicalDeviceVulkan13Features
             >();
 
+            const auto& features = supportedFeatures.get<vk::PhysicalDeviceFeatures2>();
+            const auto& features12 = supportedFeatures.get<vk::PhysicalDeviceVulkan12Features>();
+            const auto& features13 = supportedFeatures.get<vk::PhysicalDeviceVulkan13Features>();
+
             if (
+                features.features.multiDrawIndirect &&
+                features.features.drawIndirectFirstInstance &&
                 supportedFeatures.get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters &&
-                supportedFeatures.get<vk::PhysicalDeviceVulkan12Features>().bufferDeviceAddress &&
-                supportedFeatures.get<vk::PhysicalDeviceVulkan13Features>().synchronization2 &&
-                supportedFeatures.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering
+                features12.drawIndirectCount &&
+                features12.scalarBlockLayout &&
+                features12.bufferDeviceAddress &&
+                features13.synchronization2 &&
+                features13.dynamicRendering
             ) {
                 featuresSupport = true;
             }
 
             // Swapchain extension support
-            const std::vector<vk::ExtensionProperties> extensionProperties = device.enumerateDeviceExtensionProperties();
+            const std::vector<vk::ExtensionProperties>& extensionProperties = device.enumerateDeviceExtensionProperties();
 
             for (const vk::ExtensionProperties& extensionProperty : extensionProperties) {
                 if (strcmp(extensionProperty.extensionName, vk::KHRSwapchainExtensionName) == 0) {
@@ -265,14 +287,14 @@ namespace backend {
             }
 
             // Graphics queue support
-            const std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
+            const std::vector<vk::QueueFamilyProperties>& queueFamilies = device.getQueueFamilyProperties();
 
             int i = 0;
 
             for (const vk::QueueFamilyProperties& queueFamily : queueFamilies) {
                 if (
                     queueFamily.queueFlags & vk::QueueFlagBits::eGraphics &&
-                    device.getSurfaceSupportKHR(i, *mSurface) // ¿Surface present support?
+                    device.getSurfaceSupportKHR(i, *mSurface)
                 ) {
                     graphicsQueueSupport = true;
                     mGraphicsFamily = i;
@@ -281,8 +303,13 @@ namespace backend {
                 i++;
             }
 
-            if (vulkan14Support && featuresSupport && swapchainSupport && graphicsQueueSupport) {
-                // Support
+            // Initialize
+            if (
+                versionSupport &&
+                featuresSupport &&
+                swapchainSupport &&
+                graphicsQueueSupport
+            ) {
                 mPhysicalDevice = device;
                 spdlog::info("Physical device selected successfully");
                 break;
@@ -308,20 +335,6 @@ namespace backend {
             .pQueuePriorities = &queuePriority
         };
 
-        // Features
-        const vk::PhysicalDeviceVulkan11Features features11{
-            .shaderDrawParameters = true
-        };
-
-        const vk::PhysicalDeviceVulkan12Features features12{
-            .bufferDeviceAddress = true
-        };
-
-        const vk::PhysicalDeviceVulkan13Features features13{
-            .synchronization2 = true,
-            .dynamicRendering = true
-        };
-
         // Extensions
         const std::vector<const char*> extensions{ vk::KHRSwapchainExtensionName };
 
@@ -333,6 +346,30 @@ namespace backend {
             .ppEnabledExtensionNames = extensions.data()
         };
 
+
+        // Features
+        const vk::PhysicalDeviceFeatures2 features2{
+            .features = {
+                .multiDrawIndirect = true,
+                .drawIndirectFirstInstance = true
+            }
+        };
+
+        const vk::PhysicalDeviceVulkan11Features features11{
+            .shaderDrawParameters = true
+        };
+
+        const vk::PhysicalDeviceVulkan12Features features12{
+            .drawIndirectCount = true,
+            .scalarBlockLayout = true,
+            .bufferDeviceAddress = true
+        };
+
+        const vk::PhysicalDeviceVulkan13Features features13{
+            .synchronization2 = true,
+            .dynamicRendering = true
+        };
+
         // Chain
         vk::StructureChain<
             vk::DeviceCreateInfo,
@@ -342,7 +379,7 @@ namespace backend {
             vk::PhysicalDeviceVulkan13Features
         > chain{
             info,
-            {},
+            features2,
             features11,
             features12,
             features13
@@ -424,15 +461,5 @@ namespace backend {
         }
 
         return true;
-    }
-
-    VKAPI_ATTR vk::Bool32 VKAPI_CALL Context::debugCallback(
-        vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
-        vk::DebugUtilsMessageTypeFlagsEXT type,
-        const vk::DebugUtilsMessengerCallbackDataEXT* callbackData,
-        void* userData
-    ) {
-        spdlog::error("Validation error:\n{}", callbackData->pMessage);
-        return false;
     }
 }

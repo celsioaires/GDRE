@@ -7,13 +7,13 @@ namespace render {
         const backend::Context& context = mBackend->getContext();
 
         // Descriptor set
-        const backend::Descriptor& descriptor = mBackend->getDefaultDescriptor();
+        const backend::DescriptorPool& descriptorPool = mBackend->getDefaultDescriptorPool();
         const backend::DescriptorLayout& descriptorLayout = mBackend->getMaterialDescriptorLayout();
 
         if (!mDescriptorSet.initialize(
             context,
-            descriptor.getPool(),
-            descriptorLayout.getHandle()
+            descriptorPool,
+            descriptorLayout
         )) {
             return false;
         }

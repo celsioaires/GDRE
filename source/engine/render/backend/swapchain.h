@@ -5,15 +5,13 @@
 namespace backend {
     class Swapchain {
         // Objects
-        const Context* mContext;
+        const Context* mContext = nullptr;
         vk::Extent2D mExtent;
         vk::raii::SwapchainKHR mHandle = nullptr;
         std::vector<vk::Image> mImages;
         std::vector<vk::raii::ImageView> mViews;
-        uint32_t mImageIndex;
+        uint32_t mImageIndex = 0;
     public:
-        static inline const vk::Format cImageFormat = vk::Format::eB8G8R8A8Unorm;
-
         bool initialize(const Context& context);
         void cleanup();
 
@@ -30,5 +28,10 @@ namespace backend {
         bool initializeSwapchain();
         bool initializeImages();
         bool initializeViews();
+
+        // Format
+        static inline const vk::Format sFormat = vk::Format::eB8G8R8A8Unorm;
+    public:
+        static const vk::Format& getFormat() { return sFormat; }
     };
 }

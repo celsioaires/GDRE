@@ -38,13 +38,13 @@ namespace engine {
 
     void Engine::update() {
         mGui.prepareWindows();
-        mRenderer.updateScene();
+        mRenderer.updateCamera();
     }
 
     void Engine::draw() {
         mRenderer.beginDraw();
 
-        mRenderer.drawScene();
+        mRenderer.drawRenderables();
         mGui.drawWindows();
 
         mRenderer.endDraw();

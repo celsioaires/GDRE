@@ -28,12 +28,12 @@ namespace render {
         const Material* uploadMaterial(const MaterialData& data, const TextureData& colorTextureData, const TextureData& metalRoughTextureData);
         void uploadRenderable(const Mesh* mesh, const Material* material, const glm::mat4& transform);
 
-        void updateScene();
+        void updateCamera();
 
         void beginDraw();
         void endDraw();
 
-        void drawScene() const;
+        void drawRenderables() const;
 
         void waitBackend() const;
 

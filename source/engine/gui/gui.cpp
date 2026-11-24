@@ -36,17 +36,14 @@ namespace core {
         }
 
         // Pipeline info
-        VkPipelineRenderingCreateInfoKHR renderingInfo = backend::Pipeline::cRenderingInfo;
-        renderingInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
-
         ImGui_ImplVulkan_PipelineInfo pipelineInfo{
             .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
-            .PipelineRenderingCreateInfo = renderingInfo
+            .PipelineRenderingCreateInfo = backend::Pipeline::getRenderingInfo()
         };
 
         // Vulkan info
         ImGui_ImplVulkan_InitInfo vulkanInfo{
-            .ApiVersion = backend::Context::cApiVersion,
+            .ApiVersion = backend::Context::getVersion(),
             .Instance = *context.getInstance(),
             .PhysicalDevice = *context.getPhysicalDevice(),
             .Device = *context.getDevice(),

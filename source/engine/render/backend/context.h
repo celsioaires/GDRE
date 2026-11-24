@@ -12,8 +12,7 @@
 
 namespace backend {
     class Context {
-        // Objects
-        GLFWwindow* mWindow;
+        GLFWwindow* mWindow = nullptr;
         vk::raii::Context mHandle;
         vk::raii::Instance mInstance = nullptr;
         vk::raii::DebugUtilsMessengerEXT mDebugMessenger = nullptr;
@@ -22,14 +21,12 @@ namespace backend {
         uint32_t mGraphicsFamily = 0;
         vk::raii::Device mDevice = nullptr;
         vk::raii::Queue mGraphicsQueue = nullptr;
-        VmaAllocator mAllocator;
+        VmaAllocator mAllocator = nullptr;
         vk::raii::Fence mSubmitFence = nullptr;
         vk::raii::Fence mImmediateFence = nullptr;
         vk::raii::Semaphore mAcquireSemaphore = nullptr;
         vk::raii::Semaphore mSubmitSemaphore = nullptr;
     public:
-        static inline const uint32_t cApiVersion = vk::ApiVersion14;
-
         ~Context();
 
         bool initialize(GLFWwindow* window);
@@ -64,13 +61,10 @@ namespace backend {
         bool initializeAllocator();
         bool initializeFences();
         bool initializeSemaphore(vk::raii::Semaphore& semaphore);
+    public:
+        // Version
+        static const uint32_t sVersion = vk::ApiVersion13;
 
-        // Callback
-        static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
-            vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
-            vk::DebugUtilsMessageTypeFlagsEXT type,
-            const vk::DebugUtilsMessengerCallbackDataEXT* callbackData,
-            void* userData
-        );
+        static uint32_t getVersion() { return sVersion; }
     };
 }

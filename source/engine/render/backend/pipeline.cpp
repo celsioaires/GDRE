@@ -51,8 +51,10 @@ namespace backend {
 
     bool Pipeline::initializeShaders(const std::vector<std::string> &files) {
         for (const std::string& file : files) {
+            const std::string& directory = GDRE_SHADERS_DIRECTORY;
+
             // Open stream
-            std::ifstream stream(cShadersDirectory + file, std::ios::ate | std::ios::binary);
+            std::ifstream stream(directory + file, std::ios::ate | std::ios::binary);
 
             if (!stream.is_open()) {
                 // Failed
@@ -92,6 +94,7 @@ namespace backend {
     }
 
     bool Pipeline::initializeLayout(const std::vector<vk::DescriptorSetLayout>& descriptorLayouts, const std::vector<vk::PushConstantRange>& pushConstants) {
+
         // Info
         const vk::PipelineLayoutCreateInfo info{
             .setLayoutCount = static_cast<uint32_t>(descriptorLayouts.size()),
@@ -218,7 +221,7 @@ namespace backend {
             vk::PipelineRenderingCreateInfo
         > chain{
             info,
-            cRenderingInfo
+            sRenderingInfo
         };
 
         // Initialize

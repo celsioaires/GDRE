@@ -7,7 +7,6 @@
 #include <glm/glm.hpp>
 
 namespace backend {
-    // Structs
     struct BackendInfo {
         GLFWwindow* window;
     };
@@ -21,18 +20,5 @@ namespace backend {
     struct PushConstants {
         PushConstantsData data;
         vk::ShaderStageFlags stage;
-    };
-
-    // Enums
-    enum PipelineType {
-        ePipelineTypeGraphics,
-        ePipelineTypeCompute
-    };
-
-    enum BufferType {
-        eBufferTypeStaging,
-        eBufferTypeVertex,
-        eBufferTypeIndex,
-        eBufferTypeUniform,
     };
 }

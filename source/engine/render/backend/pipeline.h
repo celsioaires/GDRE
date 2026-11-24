@@ -3,24 +3,22 @@
 #include "context.h"
 #include "utils.h"
 #include "swapchain.h"
+#include "descriptor.h"
 
 namespace backend {
-    class Pipeline {
-        static inline const std::string cShadersDirectory = GDRE_SHADERS_DIRECTORY;
+    enum PipelineType {
+        ePipelineTypeGraphics,
+        ePipelineTypeCompute
+    };
 
+    class Pipeline {
         // Objects
-        const Context* mContext;
+        const Context* mContext = nullptr;
         std::vector<vk::raii::ShaderModule> mShaders;
         vk::raii::PipelineLayout mLayout = nullptr;
         vk::raii::Pipeline mHandle = nullptr;
         vk::PipelineBindPoint mBindPoint;
     public:
-        static inline const vk::PipelineRenderingCreateInfo cRenderingInfo{
-            .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &Swapchain::cImageFormat,
-            .depthAttachmentFormat = vk::Format::eD32Sfloat
-        };
-
         bool initialize(const Context& context, PipelineType type, const std::vector<std::string>& shaderFiles, const std::vector<vk::DescriptorSetLayout>& descriptorLayouts, const std::vector<PushConstants>& pushConstants);
 
         // Getters
@@ -33,5 +31,14 @@ namespace backend {
         bool initializeLayout(const std::vector<vk::DescriptorSetLayout>& descriptorLayouts, const std::vector<vk::PushConstantRange>& pushConstants);
         bool initializeGraphicsPipeline();
         bool initializeComputePipeline();
+
+        // Rendering info
+        static inline const vk::PipelineRenderingCreateInfo sRenderingInfo{
+            .colorAttachmentCount = 1,
+            .pColorAttachmentFormats = &Swapchain::getFormat(),
+            .depthAttachmentFormat = vk::Format::eD32Sfloat
+        };
+    public:
+        static vk::PipelineRenderingCreateInfo getRenderingInfo() { return sRenderingInfo; }
     };
 }

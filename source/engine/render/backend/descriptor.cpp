@@ -35,10 +35,44 @@ namespace backend {
         return true;
     }
 
-    bool DescriptorSet::initialize(const Context& context, const vk::raii::DescriptorPool& pool, const vk::raii::DescriptorSetLayout& layout) {
+    bool DescriptorPool::initialize(const Context& context, const std::vector<vk::DescriptorPoolSize>& poolSizes) {
         mContext = &context;
 
-        if (!initializeDescriptorSet(pool, layout)) {
+        // Pool
+        if (!initializeDescriptorPool(poolSizes)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool DescriptorPool::initializeDescriptorPool(const std::vector<vk::DescriptorPoolSize>& sizes) {
+        // Info
+        const vk::DescriptorPoolCreateInfo info{
+            .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+            .maxSets = 10000,
+            .poolSizeCount = static_cast<uint32_t>(sizes.size()),
+            .pPoolSizes = sizes.data()
+        };
+
+        // Initialize
+        try {
+            mHandle = vk::raii::DescriptorPool(mContext->getDevice(), info);
+            spdlog::info("Descriptor pool created successfully");
+        }
+        catch (const vk::SystemError& error) {
+            // Failed
+            spdlog::error("Failed to create descriptor pool: {}", error.what());
+            return false;
+        }
+
+        return true;
+    }
+
+    bool DescriptorSet::initialize(const Context& context, const DescriptorPool& pool, const DescriptorLayout& layout) {
+        mContext = &context;
+
+        if (!initializeDescriptorSet(pool.getHandle(), layout.getHandle())) {
             return false;
         }
 
@@ -102,40 +136,6 @@ namespace backend {
         catch (const vk::SystemError& error) {
             // Failed
             spdlog::error("Failed to allocate descriptor set: {}", error.what());
-            return false;
-        }
-
-        return true;
-    }
-
-    bool Descriptor::initialize(const Context& context, const std::vector<vk::DescriptorPoolSize>& poolSizes) {
-        mContext = &context;
-
-        // Pool
-        if (!initializeDescriptorPool(poolSizes)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    bool Descriptor::initializeDescriptorPool(const std::vector<vk::DescriptorPoolSize>& sizes) {
-        // Info
-        const vk::DescriptorPoolCreateInfo info{
-            .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-            .maxSets = 10000,
-            .poolSizeCount = static_cast<uint32_t>(sizes.size()),
-            .pPoolSizes = sizes.data()
-        };
-
-        // Initialize
-        try {
-            mPool = vk::raii::DescriptorPool(mContext->getDevice(), info);
-            spdlog::info("Descriptor pool created successfully");
-        }
-        catch (const vk::SystemError& error) {
-            // Failed
-            spdlog::error("Failed to create descriptor pool: {}", error.what());
             return false;
         }
 

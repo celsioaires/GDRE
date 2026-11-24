@@ -1,6 +1,6 @@
 # GDRE
 
-GDRE is a GPU driven rendering engine made in C++ 20 and Vulkan 1.4.
+GDRE is a GPU driven rendering engine made in C++ 20 and Vulkan 1.3.
 
 ![GDRE](docs/images/gdre2.png)
 

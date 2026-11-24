@@ -79,7 +79,7 @@ namespace backend {
         const vk::SwapchainCreateInfoKHR createInfo{
             .surface = *surface,
             .minImageCount = 3,
-            .imageFormat = cImageFormat,
+            .imageFormat = sFormat,
             .imageExtent = mExtent,
             .imageArrayLayers = 1,
             .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
@@ -129,7 +129,7 @@ namespace backend {
         // Info
         vk::ImageViewCreateInfo info{
             .viewType = vk::ImageViewType::e2D,
-            .format = cImageFormat,
+            .format = sFormat,
             .subresourceRange = subresource
         };
 

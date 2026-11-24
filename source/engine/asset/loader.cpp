@@ -4,7 +4,9 @@
 namespace asset {
     bool Loader::initialize() {
         // Assets
-        if (!loadGltf(cAssetsDirectory + "gltf/structure.glb")) {
+        const std::string& directory = GDRE_ASSETS_DIRECTORY;
+
+        if (!loadGltf(directory + "gltf/structure.glb")) {
             return false;
         }
 

@@ -6,7 +6,7 @@
 
 namespace backend {
     bool Backend::initialize(GLFWwindow* window) {
-        uint32_t graphicsFamily = mContext.getGraphicsFamily();
+        const uint32_t graphicsFamily = mContext.getGraphicsFamily();
 
         // Context, swapchain and commands
         if (
@@ -18,8 +18,8 @@ namespace backend {
             return false;
         }
 
-        // Default descriptor
-        if (!mDefaultDescriptor.initialize(
+        // Default descriptor pool
+        if (!mDefaultDescriptorPool.initialize(
             mContext, {
                 { .type = vk::DescriptorType::eUniformBuffer, .descriptorCount = 10 },
                 { .type = vk::DescriptorType::eCombinedImageSampler, .descriptorCount = 10000 }
@@ -83,7 +83,7 @@ namespace backend {
             return false;
         }
 
-        // Depth texture
+        // Depth image
         if (!mDepthImage.initialize(mContext, eImageTypeDepth, mSwapchain.getExtent())) {
             return false;
         }
@@ -92,7 +92,7 @@ namespace backend {
     }
 
     void Backend::beginCommands() {
-        vk::Image swapchainImage;
+        vk::Image swapchainImage = nullptr;
 
         try {
             // Acquire swapchain image
@@ -124,17 +124,29 @@ namespace backend {
         }
 
         // Swapchain image barrier (undefined to color)
-        mCommand.pipelineImageBarrier(swapchainImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+        mCommand.pipelineImageBarrier(
+            swapchainImage,
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eColorAttachmentOptimal
+        );
 
         // Depth image barrier (undefined to depth)
-        mCommand.pipelineImageBarrier(mDepthImage.getHandle(), vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentOptimal);
+        mCommand.pipelineImageBarrier(
+            mDepthImage.getHandle(),
+            vk::ImageLayout::eUndefined,
+            vk::ImageLayout::eDepthAttachmentOptimal
+        );
     }
 
     void Backend::endCommands() {
         const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
 
         // Swapchain image barrier (color to present)
-        mCommand.pipelineImageBarrier(mSwapchain.getCurrentImage(), vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR);
+        mCommand.pipelineImageBarrier(
+            mSwapchain.getCurrentImage(),
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::ImageLayout::ePresentSrcKHR
+        );
 
         try {
             commandBuffer.end();
@@ -231,7 +243,7 @@ namespace backend {
         commandBuffer.draw(count, 1, 0, 0);
     }
 
-    void Backend::drawIndexedVertices(const PushConstantsData& pushConstants, const DescriptorSet& materialDescriptor, const Buffer& buffer, uint32_t count) const {
+    void Backend::drawPrimitives(const PushConstantsData& pushConstants, const DescriptorSet& materialDescriptor, const Buffer& buffer, uint32_t count) const {
         const vk::raii::CommandBuffer& commandBuffer = mCommand.getBuffer();
 
         commandBuffer.bindDescriptorSets(
